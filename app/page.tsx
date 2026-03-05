@@ -61,62 +61,61 @@ export default function Lab1() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f0f2f5', fontFamily: 'sans-serif', padding: '0 0 50px 0' }}>
-      {/* Header Navigation */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', padding: '20px', background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(10px)', sticky: 'top', zIndex: 100 }}>
+    <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: 'sans-serif', paddingBottom: '60px' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', padding: '25px', background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(8px)', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', position: 'sticky', top: 0, zIndex: 10 }}>
         <button onClick={() => setView('vote')} style={navBtn(view === 'vote')}>💼 Голосування</button>
         <button onClick={() => setView('admin')} style={navBtn(view === 'admin')}>🔒 Адмінка</button>
       </div>
 
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '20px' }}>
-        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-          <span style={{ background: '#e0e7ff', color: '#4338ca', padding: '5px 15px', borderRadius: '20px', fontSize: '14px', fontWeight: 'bold' }}>
+        <div style={{ textAlign: 'center', marginBottom: '25px' }}>
+          <span style={{ background: '#6366f1', color: 'white', padding: '6px 18px', borderRadius: '30px', fontSize: '13px', fontWeight: 'bold', boxShadow: '0 4px 6px rgba(99, 102, 241, 0.2)' }}>
             {expertId}
           </span>
         </div>
 
         {view === 'vote' ? (
           <div style={{ width: '100%' }}>
-            <h1 style={{ textAlign: 'center', color: '#1f2937', marginBottom: '40px' }}>Оберіть ваші 3 найулюбленіші рослини</h1>
+            <h1 style={{ textAlign: 'center', color: '#1e293b', marginBottom: '40px', fontSize: '2.2rem' }}>Оберіть 3 найулюбленіші рослини</h1>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
               {flowers.map((f) => {
                 const isSel = selected.includes(f.id);
                 const rank = selected.indexOf(f.id) + 1;
                 return (
                   <div key={f.id} onClick={() => handleSelect(f.id)} style={card(isSel)}>
-                    <span style={{ fontSize: '40px' }}>{f.icon}</span>
-                    <span style={{ fontSize: '18px', fontWeight: '500' }}>{f.name}</span>
+                    <span style={{ fontSize: '42px', marginBottom: '10px' }}>{f.icon}</span>
+                    <span style={{ fontSize: '16px', fontWeight: '600', color: '#334155' }}>{f.name}</span>
                     {isSel && <div style={badge}>{rank}</div>}
                   </div>
                 );
               })}
             </div>
-            <div style={{ textAlign: 'center', marginTop: '50px' }}>
-              <button onClick={submitVote} style={mainBtn}>Підтвердити вибір (v=3)</button>
+            <div style={{ textAlign: 'center', marginTop: '60px' }}>
+              <button onClick={submitVote} style={mainBtn}>Надіслати вибір</button>
             </div>
           </div>
         ) : (
-          <div style={{ background: 'white', padding: '30px', borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-            <h2 style={{ marginBottom: '20px' }}>📊 Протокол результатів</h2>
+          <div style={{ background: 'white', padding: '40px', borderRadius: '24px', boxShadow: '0 15px 30px rgba(0,0,0,0.05)' }}>
+            <h2 style={{ color: '#1e293b', marginBottom: '25px' }}>📊 Протокол експертних оцінок</h2>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ borderBottom: '2px solid #edf2f7', textAlign: 'left' }}>
-                    <th style={{ padding: '15px' }}>Експерт</th>
-                    <th style={{ padding: '15px' }}>Пріоритетність (1 > 2 > 3)</th>
-                    <th style={{ padding: '15px' }}>Час</th>
+                  <tr style={{ borderBottom: '2px solid #f1f5f9', textAlign: 'left' }}>
+                    <th style={{ padding: '18px' }}>Експерт</th>
+                    <th style={{ padding: '18px' }}>Пріоритетність (1 &gt; 2 &gt; 3)</th>
+                    <th style={{ padding: '18px' }}>Час</th>
                   </tr>
                 </thead>
                 <tbody>
                   {votes.map((v, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid #edf2f7' }}>
-                      <td style={{ padding: '15px' }}>{v.expert}</td>
-                      <td style={{ padding: '15px', color: '#4f46e5', fontWeight: 'bold' }}>{v.choices.join(' → ')}</td>
-                      <td style={{ padding: '15px', color: '#718096' }}>{v.time}</td>
+                    <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                      <td style={{ padding: '18px', fontWeight: '500' }}>{v.expert}</td>
+                      <td style={{ padding: '18px', color: '#6366f1', fontWeight: 'bold' }}>{v.choices.join(' → ')}</td>
+                      <td style={{ padding: '18px', color: '#94a3b8' }}>{v.time}</td>
                     </tr>
                   ))}
                   {votes.length === 0 && (
-                    <tr><td colSpan={3} style={{ padding: '30px', textAlign: 'center', color: '#a0aec0' }}>Дані відсутні</td></tr>
+                    <tr><td colSpan={3} style={{ padding: '50px', textAlign: 'center', color: '#cbd5e1' }}>Дані поки відсутні</td></tr>
                   )}
                 </tbody>
               </table>
@@ -129,26 +128,26 @@ export default function Lab1() {
 }
 
 const navBtn = (active: boolean): React.CSSProperties => ({
-  padding: '10px 25px', borderRadius: '12px', border: 'none', cursor: 'pointer',
-  background: active ? '#4f46e5' : 'transparent', color: active ? 'white' : '#4b5563',
-  fontWeight: '600', transition: '0.3s'
+  padding: '12px 28px', borderRadius: '14px', border: 'none', cursor: 'pointer',
+  background: active ? '#6366f1' : 'transparent', color: active ? 'white' : '#64748b',
+  fontWeight: '600', transition: 'all 0.3s', boxShadow: active ? '0 4px 12px rgba(99, 102, 241, 0.3)' : 'none'
 });
 
 const card = (sel: boolean): React.CSSProperties => ({
-  background: 'white', padding: '30px', borderRadius: '20px', cursor: 'pointer',
-  display: 'flex', alignItems: 'center', gap: '20px', transition: '0.3s',
-  boxShadow: sel ? '0 0 0 3px #4f46e5' : '0 4px 6px rgba(0,0,0,0.02)',
-  position: 'relative'
+  background: 'white', padding: '30px', borderRadius: '22px', cursor: 'pointer',
+  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', transition: 'all 0.3s',
+  boxShadow: sel ? '0 0 0 3px #6366f1' : '0 4px 6px rgba(0,0,0,0.03)',
+  position: 'relative', transform: sel ? 'translateY(-5px)' : 'none'
 });
 
 const badge: React.CSSProperties = {
-  position: 'absolute', right: '20px', top: '20px', background: '#4f46e5',
-  color: 'white', width: '30px', height: '30px', borderRadius: '50%',
-  display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold'
+  position: 'absolute', right: '15px', top: '15px', background: '#6366f1',
+  color: 'white', width: '32px', height: '32px', borderRadius: '50%',
+  display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '14px'
 };
 
 const mainBtn: React.CSSProperties = {
-  padding: '18px 60px', borderRadius: '35px', border: 'none', background: '#4f46e5',
+  padding: '20px 80px', borderRadius: '40px', border: 'none', background: '#6366f1',
   color: 'white', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer',
-  boxShadow: '0 10px 15px rgba(79, 70, 229, 0.3)'
+  boxShadow: '0 12px 20px rgba(99, 102, 241, 0.3)', transition: 'transform 0.2s'
 };
