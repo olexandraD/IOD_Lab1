@@ -2,32 +2,33 @@
 import React, { useState } from 'react';
 
 const flowers = [
-  { id: 'f1', name: 'Червона Троянда', img: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=200&h=200&auto=format&fit=crop' },
-  { id: 'f2', name: 'Біла Лілія', img: 'https://images.unsplash.com/photo-1502977249166-824b3a8a4d6d?q=80&w=200&h=200&auto=format&fit=crop' },
-  { id: 'f3', name: 'Соняшник', img: 'https://images.unsplash.com/photo-1470509037663-253afd7f0f51?q=80&w=200&h=200&auto=format&fit=crop' },
-  { id: 'f4', name: 'Лаванда', img: 'https://images.unsplash.com/photo-1565011523534-747a8601f10a?q=80&w=200&h=200&auto=format&fit=crop' },
-  { id: 'f5', name: 'Орхідея', img: 'https://images.unsplash.com/photo-1534885391029-cc2846cb5d83?q=80&w=200&h=200&auto=format&fit=crop' },
-  { id: 'f6', name: 'Тюльпан', img: 'https://images.unsplash.com/photo-1520323232427-4144953d9309?q=80&w=200&h=200&auto=format&fit=crop' },
-  { id: 'f7', name: 'Півонія', img: 'https://images.unsplash.com/photo-1563241527-3004b7be0fab?q=80&w=200&h=200&auto=format&fit=crop' },
-  { id: 'f8', name: 'Магнолія', img: 'https://images.unsplash.com/photo-1525310235261-94527ec3186d?q=80&w=200&h=200&auto=format&fit=crop' },
-  { id: 'f9', name: 'Сакура', img: 'https://images.unsplash.com/photo-1522383225653-ed111181a951?q=80&w=200&h=200&auto=format&fit=crop' },
-  { id: 'f10', name: 'Гортензія', img: 'https://images.unsplash.com/photo-1507290439931-a861b5a38200?q=80&w=200&h=200&auto=format&fit=crop' },
-  { id: 'f11', name: 'Ірис', img: 'https://images.unsplash.com/photo-1463930601335-32f234b51bb6?q=80&w=200&h=200&auto=format&fit=crop' },
-  { id: 'f12', name: 'Лотос', img: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=200&h=200&auto=format&fit=crop' },
-  { id: 'f13', name: 'Гібіскус', img: 'https://images.unsplash.com/photo-1546833998-877b37c2e5c6?q=80&w=200&h=200&auto=format&fit=crop' },
-  { id: 'f14', name: 'Нарцис', img: 'https://images.unsplash.com/photo-1444021465936-c6ca81d3f3ad?q=80&w=200&h=200&auto=format&fit=crop' },
-  { id: 'f15', name: 'Жасмин', img: 'https://images.unsplash.com/photo-1596130101538-406187764f69?q=80&w=200&h=200&auto=format&fit=crop' },
-  { id: 'f16', name: 'Ромашка', img: 'https://images.unsplash.com/photo-1464334468620-1b55979bc62d?q=80&w=200&h=200&auto=format&fit=crop' },
-  { id: 'f17', name: 'Хризантема', img: 'https://images.unsplash.com/photo-1603565555067-157978252a13?q=80&w=200&h=200&auto=format&fit=crop' },
-  { id: 'f18', name: 'Гербера', img: 'https://images.unsplash.com/photo-1596273444615-80261c43abc7?q=80&w=200&h=200&auto=format&fit=crop' },
-  { id: 'f19', name: 'Мак', img: 'https://images.unsplash.com/photo-1550504105-0909581895a6?q=80&w=200&h=200&auto=format&fit=crop' },
-  { id: 'f20', name: 'Кала', img: 'https://images.unsplash.com/photo-1549488344-1f9b05de0bb6?q=80&w=200&h=200&auto=format&fit=crop' },
+  { id: 'f1', name: 'Червона Троянда', img: 'https://picsum.photos/id/1015/300/200' },
+  { id: 'f2', name: 'Біла Лілія', img: 'https://picsum.photos/id/102/300/200' },
+  { id: 'f3', name: 'Соняшник', img: 'https://picsum.photos/id/103/300/200' },
+  { id: 'f4', name: 'Лаванда', img: 'https://picsum.photos/id/104/300/200' },
+  { id: 'f5', name: 'Орхідея', img: 'https://picsum.photos/id/105/300/200' },
+  { id: 'f6', name: 'Тюльпан', img: 'https://picsum.photos/id/106/300/200' },
+  { id: 'f7', name: 'Півонія', img: 'https://picsum.photos/id/107/300/200' },
+  { id: 'f8', name: 'Магнолія', img: 'https://picsum.photos/id/108/300/200' },
+  { id: 'f9', name: 'Сакура', img: 'https://picsum.photos/id/109/300/200' },
+  { id: 'f10', name: 'Гортензія', img: 'https://picsum.photos/id/110/300/200' },
+  { id: 'f11', name: 'Ірис', img: 'https://picsum.photos/id/111/300/200' },
+  { id: 'f12', name: 'Лотос', img: 'https://picsum.photos/id/112/300/200' },
+  { id: 'f13', name: 'Гібіскус', img: 'https://picsum.photos/id/113/300/200' },
+  { id: 'f14', name: 'Нарцис', img: 'https://picsum.photos/id/114/300/200' },
+  { id: 'f15', name: 'Жасмин', img: 'https://picsum.photos/id/115/300/200' },
+  { id: 'f16', name: 'Ромашка', img: 'https://picsum.photos/id/116/300/200' },
+  { id: 'f17', name: 'Хризантема', img: 'https://picsum.photos/id/117/300/200' },
+  { id: 'f18', name: 'Гербера', img: 'https://picsum.photos/id/118/300/200' },
+  { id: 'f19', name: 'Мак', img: 'https://picsum.photos/id/119/300/200' },
+  { id: 'f20', name: 'Кала', img: 'https://picsum.photos/id/120/300/200' },
 ];
 
-const MEDALS = ['🥇 1-ше', '🥈 2-ге', '🥉 3-тє'];
+const MEDALS = ['🥇 1', '🥈 2', '🥉 3'];
 
-// Опис інтерфейсу для усунення помилки 'Unexpected any'
+// Оновлений інтерфейс з автоматичним анонімним експертом
 interface VoteRecord {
+  expert: string;
   choices: string[];
   time: string;
 }
@@ -50,11 +51,22 @@ export default function Lab1App() {
   };
 
   const confirmVote = () => {
-    if (selected.length !== 3) return alert("Будь ласка, заповніть усі 3 призові місця!");
-    const record: VoteRecord = { 
-      choices: selected.map(id => flowers.find(f => f.id === id)!.name), 
-      time: new Date().toLocaleTimeString() 
+    if (selected.length !== 3) {
+      return alert("Будь ласка, заповніть усі 3 призові місця!");
+    }
+
+    // Автоматичне присвоювання анонімного експерта
+    const expert = `Експерт ${votes.length + 1}`;
+
+    const record: VoteRecord = {
+      expert,
+      choices: selected.map(id => flowers.find(f => f.id === id)!.name),
+      time: new Date().toLocaleTimeString('uk-UA', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      })
     };
+
     setVotes(prev => [...prev, record]);
     setIsDone(true);
   };
@@ -65,35 +77,139 @@ export default function Lab1App() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#020617', color: '#f8fafc', paddingBottom: '120px', fontFamily: 'sans-serif' }}>
-      <nav style={{ padding: '20px 5%', borderBottom: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 style={{ fontSize: '1rem', letterSpacing: '2px', color: '#f472b6', margin: 0 }}>EXPERT PANEL</h2>
-        <button onClick={() => setView(view === 'results' ? 'vote' : 'login')} style={{ background: '#1e293b', border: '1px solid #334155', color: '#fff', padding: '8px 15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
-          {view === 'results' ? '← Назад' : '🔑 Вхід'}
+    <div style={{ 
+      minHeight: '100vh', 
+      background: 'linear-gradient(135deg, #020617 0%, #0f172a 100%)', 
+      color: '#f8fafc', 
+      paddingBottom: '140px', 
+      fontFamily: 'system-ui, -apple-system, sans-serif' 
+    }}>
+      {/* Навігація */}
+      <nav style={{ 
+        padding: '20px 5%', 
+        borderBottom: '1px solid #334155', 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        background: 'rgba(15, 23, 42, 0.95)',
+        backdropFilter: 'blur(20px)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100
+      }}>
+        <h2 style={{ 
+          fontSize: '1.1rem', 
+          letterSpacing: '3px', 
+          color: '#f472b6', 
+          margin: 0, 
+          fontWeight: '800' 
+        }}>
+          EXPERT PANEL
+        </h2>
+        <button 
+          onClick={() => setView(view === 'results' ? 'vote' : 'login')} 
+          style={{ 
+            background: '#1e293b', 
+            border: '1px solid #334155', 
+            color: '#fff', 
+            padding: '10px 20px', 
+            borderRadius: '12px', 
+            cursor: 'pointer', 
+            fontWeight: '700',
+            transition: 'all 0.2s'
+          }}
+          onMouseOver={(e) => e.currentTarget.style.background = '#334155'}
+          onMouseOut={(e) => e.currentTarget.style.background = '#1e293b'}
+        >
+          {view === 'results' ? '← Назад до голосування' : '🔑 Вхід для викладача'}
         </button>
       </nav>
 
-      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 20px' }}>
+      <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '50px 20px' }}>
         {view === 'vote' ? (
           <>
-            <h1 style={{ textAlign: 'center', fontSize: '2.5rem', fontWeight: '900', marginBottom: '40px', background: 'linear-gradient(to right, #f472b6, #fb7185)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: '0 0 40px 0' }}>
-              Оберіть 3 найвпливовіші квітки (місця 1-3)
+            <h1 style={{ 
+              textAlign: 'center', 
+              fontSize: '2.8rem', 
+              fontWeight: '900', 
+              marginBottom: '50px', 
+              background: 'linear-gradient(to right, #f472b6, #fb7185, #a78bfa)', 
+              WebkitBackgroundClip: 'text', 
+              WebkitTextFillColor: 'transparent',
+              lineHeight: '1.1'
+            }}>
+              Оберіть 3 найвпливовіші об’єкти<br />(місця 1–3)
             </h1>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '15px' }}>
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', 
+              gap: '24px' 
+            }}>
               {flowers.map(f => {
                 const idx = selected.indexOf(f.id);
                 const isSel = idx !== -1;
+
                 return (
-                  <div key={f.id} onClick={() => handleSelect(f.id)} style={{
-                    background: '#0f172a', borderRadius: '16px', overflow: 'hidden', cursor: isDone ? 'default' : 'pointer',
-                    border: isSel ? '3px solid #f472b6' : '1px solid #1e293b', transition: '0.2s', position: 'relative',
-                    opacity: isDone && !isSel ? 0.4 : 1
-                  }}>
-                    <img src={f.img} alt={f.name} style={{ width: '100%', height: '140px', objectFit: 'cover' }} />
-                    <div style={{ padding: '10px', textAlign: 'center', fontSize: '0.85rem', fontWeight: 'bold' }}>{f.name}</div>
+                  <div 
+                    key={f.id} 
+                    onClick={() => handleSelect(f.id)} 
+                    style={{
+                      background: '#0f172a',
+                      borderRadius: '20px',
+                      overflow: 'hidden',
+                      cursor: isDone ? 'default' : 'pointer',
+                      border: isSel ? '4px solid #f472b6' : '2px solid #1e293b',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      position: 'relative',
+                      boxShadow: isSel 
+                        ? '0 20px 25px -5px rgba(244, 114, 182, 0.3)' 
+                        : '0 10px 15px -3px rgba(0,0,0,0.3)',
+                      transform: isSel ? 'scale(1.04)' : 'scale(1)',
+                      opacity: isDone && !isSel ? 0.45 : 1
+                    }}
+                  >
+                    <img 
+                      src={f.img} 
+                      alt={f.name} 
+                      style={{ 
+                        width: '100%', 
+                        height: '190px', 
+                        objectFit: 'cover',
+                        transition: 'transform 0.4s'
+                      }} 
+                      onError={(e) => {
+                        e.currentTarget.src = 'https://picsum.photos/id/1005/300/200';
+                      }}
+                    />
+                    
+                    <div style={{ 
+                      padding: '16px 12px', 
+                      textAlign: 'center', 
+                      fontSize: '0.95rem', 
+                      fontWeight: '700',
+                      background: 'rgba(15, 23, 42, 0.6)',
+                      backdropFilter: 'blur(8px)'
+                    }}>
+                      {f.name}
+                    </div>
+
                     {isSel && (
-                      <div style={{ position: 'absolute', top: '5px', left: '5px', background: '#f472b6', color: 'white', padding: '2px 8px', borderRadius: '8px', fontSize: '0.7rem', fontWeight: '900', boxShadow: '0 4px 10px rgba(0,0,0,0.5)' }}>
+                      <div style={{ 
+                        position: 'absolute', 
+                        top: '12px', 
+                        left: '12px', 
+                        background: 'linear-gradient(135deg, #f472b6, #db2777)', 
+                        color: 'white', 
+                        padding: '6px 14px', 
+                        borderRadius: '9999px', 
+                        fontSize: '0.95rem', 
+                        fontWeight: '900', 
+                        boxShadow: '0 8px 16px rgba(244, 114, 182, 0.5)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}>
                         {MEDALS[idx]}
                       </div>
                     )}
@@ -103,60 +219,264 @@ export default function Lab1App() {
             </div>
           </>
         ) : view === 'login' ? (
-          <div style={{ maxWidth: '400px', margin: '100px auto', background: '#0f172a', padding: '40px', borderRadius: '24px', textAlign: 'center', border: '1px solid #1e293b' }}>
-            <h2 style={{ marginBottom: '25px', fontWeight: '900' }}>Вхід в систему</h2>
-            <div style={{ position: 'relative', marginBottom: '20px' }}>
-              <input 
-                type={showPass ? "text" : "password"} 
-                placeholder="Введіть пароль" 
-                onChange={e => setPass(e.target.value)} 
-                style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #334155', background: '#020617', color: 'white', boxSizing: 'border-box' }} 
+          <div style={{ 
+            maxWidth: '420px', 
+            margin: '120px auto', 
+            background: '#0f172a', 
+            padding: '50px 40px', 
+            borderRadius: '28px', 
+            textAlign: 'center', 
+            border: '1px solid #334155',
+            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)'
+          }}>
+            <div style={{ fontSize: '3rem', marginBottom: '20px' }}>🔐</div>
+            <h2 style={{ marginBottom: '30px', fontWeight: '900', fontSize: '1.8rem' }}>Вхід для викладача</h2>
+            
+            <div style={{ position: 'relative', marginBottom: '25px' }}>
+              <input
+                type={showPass ? "text" : "password"}
+                placeholder="Введіть пароль"
+                onChange={e => setPass(e.target.value)}
+                style={{ 
+                  width: '100%', 
+                  padding: '16px 20px', 
+                  borderRadius: '14px', 
+                  border: '2px solid #334155', 
+                  background: '#020617', 
+                  color: 'white', 
+                  fontSize: '1.05rem',
+                  boxSizing: 'border-box'
+                }}
               />
-              <button 
-                onClick={() => setShowPass(!showPass)} 
-                style={{ position: 'absolute', right: '10px', top: '10px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: '#94a3b8' }}
+              <button
+                onClick={() => setShowPass(!showPass)}
+                style={{ 
+                  position: 'absolute', 
+                  right: '16px', 
+                  top: '50%', 
+                  transform: 'translateY(-50%)',
+                  background: 'none', 
+                  border: 'none', 
+                  cursor: 'pointer', 
+                  fontSize: '1.4rem', 
+                  color: '#94a3b8' 
+                }}
               >
                 {showPass ? '🔒' : '👁️'}
               </button>
             </div>
-            <button 
-              onClick={() => pass === 'lr1_2026' ? setView('results') : alert('Невірний пароль!')} 
-              style={{ width: '100%', background: '#6366f1', color: 'white', border: 'none', padding: '15px', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' }}
+
+            <button
+              onClick={() => pass === 'lr1_2026' ? setView('results') : alert('Невірний пароль!')}
+              style={{ 
+                width: '100%', 
+                background: 'linear-gradient(to right, #6366f1, #a78bfa)', 
+                color: 'white', 
+                border: 'none', 
+                padding: '16px', 
+                borderRadius: '14px', 
+                fontWeight: '800', 
+                fontSize: '1.1rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
             >
-              УВІЙТИ
+              УВІЙТИ В ПРОТОКОЛ
             </button>
           </div>
         ) : (
-          <div style={{ background: '#0f172a', padding: '30px', borderRadius: '24px', border: '1px solid #1e293b' }}>
-            <h2 style={{ marginBottom: '25px', fontWeight: '900' }}>📊 Протокол експертних оцінок</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {votes.length > 0 ? votes.map((v, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '15px', borderBottom: '1px solid #1e293b', background: '#1e293b44', borderRadius: '12px' }}>
-                  <span style={{ fontWeight: '500' }}>{v.choices.join(' → ')}</span>
-                  <span style={{ color: '#64748b', fontSize: '0.8rem' }}>{v.time}</span>
+          /* АДМІН ПАНЕЛЬ (протокол) */
+          <div style={{ 
+            background: '#0f172a', 
+            padding: '40px', 
+            borderRadius: '24px', 
+            border: '1px solid #334155',
+            boxShadow: '0 20px 40px -15px rgba(0,0,0,0.6)'
+          }}>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              marginBottom: '30px',
+              borderBottom: '2px solid #334155',
+              paddingBottom: '20px'
+            }}>
+              <h2 style={{ fontWeight: '900', fontSize: '1.9rem', margin: 0 }}>
+                📋 Протокол голосування
+              </h2>
+              <div style={{ 
+                background: '#1e293b', 
+                padding: '8px 18px', 
+                borderRadius: '9999px', 
+                fontSize: '0.95rem',
+                fontWeight: '700',
+                color: '#f472b6'
+              }}>
+                Голосів: <span style={{ color: '#fff' }}>{votes.length}</span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {votes.length > 0 ? (
+                votes.map((v, i) => (
+                  <div 
+                    key={i} 
+                    style={{ 
+                      padding: '24px', 
+                      background: '#1e293b44', 
+                      borderRadius: '18px',
+                      border: '1px solid #334155'
+                    }}
+                  >
+                    <div style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center', 
+                      marginBottom: '16px' 
+                    }}>
+                      <div style={{ 
+                        fontWeight: '700', 
+                        fontSize: '1.15rem', 
+                        color: '#f472b6' 
+                      }}>
+                        {v.expert}
+                      </div>
+                      <div style={{ 
+                        color: '#64748b', 
+                        fontSize: '0.9rem', 
+                        fontFamily: 'monospace' 
+                      }}>
+                        {v.time}
+                      </div>
+                    </div>
+
+                    {/* Місця обов’язково з медалями */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {v.choices.map((choice, idx) => (
+                        <div 
+                          key={idx} 
+                          style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '14px', 
+                            fontSize: '1.1rem',
+                            padding: '8px 0'
+                          }}
+                        >
+                          <span style={{ 
+                            fontSize: '1.8rem', 
+                            lineHeight: 1,
+                            minWidth: '42px'
+                          }}>
+                            {MEDALS[idx]}
+                          </span>
+                          <span style={{ fontWeight: '600' }}>{choice}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div style={{ 
+                  textAlign: 'center', 
+                  padding: '80px 20px', 
+                  color: '#64748b',
+                  fontSize: '1.1rem'
+                }}>
+                  Голосів ще немає. Поверніться до голосування.
                 </div>
-              )) : (
-                <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>Голосів поки немає. Поверніться до голосування.</div>
               )}
             </div>
           </div>
         )}
       </main>
 
-      {/* НИЖНЯ ФІКСОВАНА ПАНЕЛЬ З РЕЗУЛЬТАТАМИ */}
+      {/* Фіксована нижня панель з вибраними місцями */}
       {selected.length > 0 && view === 'vote' && (
-        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(20px)', borderTop: '2px solid #f472b6', padding: '20px', zIndex: 1000 }}>
-          <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-            <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-              {selected.map((id, idx) => (
-                <div key={id} style={{ fontSize: '0.9rem', background: '#1e293b', padding: '8px 15px', borderRadius: '10px', border: '1px solid #334155' }}>
-                  <span style={{ color: '#f472b6', fontWeight: '900' }}>{idx + 1}-ше:</span> {flowers.find(f => f.id === id)?.name}
-                </div>
-              ))}
+        <div style={{ 
+          position: 'fixed', 
+          bottom: 0, 
+          left: 0, 
+          right: 0, 
+          background: 'rgba(15, 23, 42, 0.96)', 
+          backdropFilter: 'blur(24px)', 
+          borderTop: '3px solid #f472b6', 
+          padding: '22px 20px', 
+          zIndex: 1000 
+        }}>
+          <div style={{ 
+            maxWidth: '1280px', 
+            margin: '0 auto', 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            flexWrap: 'wrap', 
+            gap: '20px' 
+          }}>
+            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+              {selected.map((id, idx) => {
+                const name = flowers.find(f => f.id === id)?.name;
+                return (
+                  <div 
+                    key={id} 
+                    style={{ 
+                      fontSize: '1rem', 
+                      background: '#1e293b', 
+                      padding: '12px 20px', 
+                      borderRadius: '14px', 
+                      border: '2px solid #334155',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    <span style={{ 
+                      color: '#f472b6', 
+                      fontWeight: '900', 
+                      fontSize: '1.1rem' 
+                    }}>
+                      {idx + 1}:
+                    </span> 
+                    {name}
+                  </div>
+                );
+              })}
             </div>
-            <div style={{ display: 'flex', gap: '15px' }}>
-              <button onClick={resetVote} style={{ background: 'transparent', border: '1px solid #f472b6', color: '#f472b6', padding: '10px 20px', borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold' }}>Скинути та переголосувати</button>
-              {!isDone && <button onClick={confirmVote} style={{ background: '#f472b6', border: 'none', color: 'white', padding: '10px 30px', borderRadius: '12px', cursor: 'pointer', fontWeight: '900', boxShadow: '0 4px 15px rgba(244, 114, 182, 0.4)' }}>ПІДТВЕРДИТИ ✅</button>}
+
+            <div style={{ display: 'flex', gap: '14px' }}>
+              <button 
+                onClick={resetVote} 
+                style={{ 
+                  background: 'transparent', 
+                  border: '2px solid #f472b6', 
+                  color: '#f472b6', 
+                  padding: '12px 26px', 
+                  borderRadius: '14px', 
+                  cursor: 'pointer', 
+                  fontWeight: '700',
+                  transition: 'all 0.2s'
+                }}
+              >
+                Скинути
+              </button>
+              {!isDone && (
+                <button 
+                  onClick={confirmVote} 
+                  style={{ 
+                    background: 'linear-gradient(to right, #f472b6, #db2777)', 
+                    border: 'none', 
+                    color: 'white', 
+                    padding: '12px 36px', 
+                    borderRadius: '14px', 
+                    cursor: 'pointer', 
+                    fontWeight: '900', 
+                    fontSize: '1.05rem',
+                    boxShadow: '0 10px 25px rgba(244, 114, 182, 0.4)'
+                  }}
+                >
+                  ПІДТВЕРДИТИ ГОЛОС ✅
+                </button>
+              )}
             </div>
           </div>
         </div>
