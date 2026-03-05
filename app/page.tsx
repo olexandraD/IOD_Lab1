@@ -1,101 +1,98 @@
-import Image from "next/image";
+"use client";
+import React, { useState } from 'react';
 
-export default function Home() {
+const flowers = [
+  { id: 'a1', name: 'Монстера Деліціоза', icon: '🪴' },
+  { id: 'a2', name: 'Сансев’єрія', icon: '🌵' },
+  { id: 'a3', name: 'Заміокулькас', icon: '🌿' },
+  { id: 'a4', name: 'Фікус Лірата', icon: '🍃' },
+  { id: 'a5', name: 'Хлорофітум', icon: '🌱' },
+  { id: 'a6', name: 'Спатифілум', icon: '🏳️' },
+  { id: 'a7', name: 'Драцена Маргіната', icon: '🌴' },
+  { id: 'a8', name: 'Алое Віра', icon: '🎍' },
+  { id: 'a9', name: 'Нефролепіс (Папороть)', icon: '🌿' },
+  { id: 'a10', name: 'Ехеверія (Сукулент)', icon: '🪴' },
+  { id: 'a11', name: 'Лаванда', icon: '🪻' },
+  { id: 'a12', name: 'Протея Королівська', icon: '🏵️' },
+  { id: 'a13', name: 'Стреліція', icon: '🐦' },
+  { id: 'a14', name: 'Орхідея Фаленопсис', icon: '🌸' },
+  { id: 'a15', name: 'Антуріум', icon: '🥀' },
+  { id: 'a16', name: 'Евкаліпт Сріблястий', icon: '🌿' },
+  { id: 'a17', name: 'Кактус Опунція', icon: '🌵' },
+  { id: 'a18', name: 'Бонсай Фікус', icon: '🌳' },
+  { id: 'a19', name: 'Калатея Орната', icon: '🎨' },
+  { id: 'a20', name: 'Бамбук Лаки', icon: '🎋' },
+];
+
+export default function Lab1() {
+  const [expertId, setExpertId] = useState('');
+  const [items, setItems] = useState(flowers);
+  const [voted, setVoted] = useState(false);
+
+  const move = (index: number, direction: number) => {
+    const newItems = [...items];
+    const nextIndex = index + direction;
+    if (nextIndex < 0 || nextIndex >= newItems.length) return;
+    [newItems[index], newItems[nextIndex]] = [newItems[nextIndex], newItems[index]];
+    setItems(newItems);
+  };
+
+  const submitVote = () => {
+    if (!expertId) return alert("Будь ласка, введіть код експерта");
+    setVoted(true);
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+    <div style={{ maxWidth: '500px', margin: 'auto', padding: '40px 20px', fontFamily: 'system-ui, sans-serif', backgroundColor: '#f9fafb', minHeight: '100vh' }}>
+      <h1 style={{ textAlign: 'center', color: '#111827' }}>🌱 Озеленення IT-офісу</h1>
+      <p style={{ textAlign: 'center', color: '#6b7280' }}>Лабораторна робота №1</p>
+      
+      {!voted ? (
+        <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px' }}>Анонімний код експерта:</label>
+            <input 
+              type="text" 
+              placeholder="Наприклад: user_123"
+              value={expertId} 
+              onChange={(e) => setExpertId(e.target.value)}
+              style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '6px', boxSizing: 'border-box' }}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          </div>
+
+          <p style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>⚠️ Підніміть 3 найкращі варіанти вгору списку (v=3):</p>
+          
+          {items.map((flower, index) => (
+            <div key={flower.id} style={{ 
+              display: 'flex', alignItems: 'center', padding: '10px', 
+              border: '1px solid #e5e7eb', marginBottom: '8px', borderRadius: '8px',
+              background: index < 3 ? '#ecfdf5' : 'white',
+              transition: 'background 0.3s'
+            }}>
+              <span style={{ marginRight: '12px', fontSize: '24px' }}>{flower.icon}</span>
+              <span style={{ flexGrow: 1, fontSize: '15px' }}>{index + 1}. {flower.name}</span>
+              <div style={{ display: 'flex', gap: '4px' }}>
+                <button onClick={() => move(index, -1)} style={{ padding: '5px 10px', cursor: 'pointer' }}>↑</button>
+                <button onClick={() => move(index, 1)} style={{ padding: '5px 10px', cursor: 'pointer' }}>↓</button>
+              </div>
+            </div>
+          ))}
+
+          <button onClick={submitVote} style={{ 
+            width: '100%', padding: '16px', background: '#059669', 
+            color: 'white', border: 'none', borderRadius: '8px', marginTop: '20px',
+            fontSize: '16px', fontWeight: 'bold', cursor: 'pointer'
+          }}>
+            Надіслати анонімно
+          </button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      ) : (
+        <div style={{ textAlign: 'center', padding: '40px', backgroundColor: 'white', borderRadius: '12px' }}>
+          <h2 style={{ color: '#059669' }}>Дякуємо, {expertId}! ✅</h2>
+          <p>Ваше множинне порівняння збережено в протоколі.</p>
+          <button onClick={() => setVoted(false)} style={{ color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Проголосувати ще раз</button>
+        </div>
+      )}
     </div>
   );
 }
