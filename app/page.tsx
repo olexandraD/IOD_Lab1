@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const flowers = [
   { id: 'a1', name: 'Монстера Деліціоза', icon: '🪴' },
@@ -10,8 +10,8 @@ const flowers = [
   { id: 'a6', name: 'Спатифілум', icon: '🏳️' },
   { id: 'a7', name: 'Драцена Маргіната', icon: '🌴' },
   { id: 'a8', name: 'Алое Віра', icon: '🎍' },
-  { id: 'a9', name: 'Нефролепіс (Папороть)', icon: '🌿' },
-  { id: 'a10', name: 'Ехеверія (Сукулент)', icon: '🪴' },
+  { id: 'a9', name: 'Папороть', icon: '🌿' },
+  { id: 'a10', name: 'Ехеверія', icon: '🪴' },
   { id: 'a11', name: 'Лаванда', icon: '🪻' },
   { id: 'a12', name: 'Протея Королівська', icon: '🏵️' },
   { id: 'a13', name: 'Стреліція', icon: '🐦' },
@@ -25,74 +25,113 @@ const flowers = [
 ];
 
 export default function Lab1() {
+  const [view, setView] = useState('vote'); // 'vote' або 'admin'
   const [expertId, setExpertId] = useState('');
-  const [items, setItems] = useState(flowers);
-  const [voted, setVoted] = useState(false);
+  const [selected, setSelected] = useState([]);
+  const [allVotes, setAllVotes] = useState([]); // Імітація бази даних
 
-  const move = (index: number, direction: number) => {
-    const newItems = [...items];
-    const nextIndex = index + direction;
-    if (nextIndex < 0 || nextIndex >= newItems.length) return;
-    [newItems[index], newItems[nextIndex]] = [newItems[nextIndex], newItems[index]];
-    setItems(newItems);
+  // Автоматичне присвоєння номера експерта при завантаженні
+  useEffect(() => {
+    setExpertId(`Експерт #${Math.floor(1000 + Math.random() * 9000)}`);
+  }, []);
+
+  const toggleSelect = (id) => {
+    if (selected.includes(id)) {
+      setSelected(selected.filter(item => item !== id));
+    } else if (selected.length < 3) {
+      setSelected([...selected, id]);
+    }
   };
 
-  const submitVote = () => {
-    if (!expertId) return alert("Будь ласка, введіть код експерта");
-    setVoted(true);
+  const handleVote = () => {
+    if (selected.length < 3) return alert("Оберіть рівно 3 рослини!");
+    const newVote = { expert: expertId, choices: selected, time: new Date().toLocaleTimeString() };
+    setAllVotes([...allVotes, newVote]);
+    alert("Ваш вибір прийнято!");
+    setSelected([]);
   };
 
   return (
-    <div style={{ maxWidth: '500px', margin: 'auto', padding: '40px 20px', fontFamily: 'system-ui, sans-serif', backgroundColor: '#f9fafb', minHeight: '100vh' }}>
-      <h1 style={{ textAlign: 'center', color: '#111827' }}>🌱 Озеленення IT-офісу</h1>
-      <p style={{ textAlign: 'center', color: '#6b7280' }}>Лабораторна робота №1</p>
-      
-      {!voted ? (
-        <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px' }}>Анонімний код експерта:</label>
-            <input 
-              type="text" 
-              placeholder="Наприклад: user_123"
-              value={expertId} 
-              onChange={(e) => setExpertId(e.target.value)}
-              style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '6px', boxSizing: 'border-box' }}
-            />
-          </div>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #f0f4f8 0%, #d7e3ec 100%)', fontFamily: 'sans-serif', padding: '20px' }}>
+      {/* Навігація */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '30px' }}>
+        <button onClick={() => setView('vote')} style={navBtnStyle(view === 'vote')}>💼 Голосування</button>
+        <button onClick={() => setView('admin')} style={navBtnStyle(view === 'admin')}>🔒 Адмінка</button>
+      </div>
 
-          <p style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>⚠️ Підніміть 3 найкращі варіанти вгору списку (v=3):</p>
-          
-          {items.map((flower, index) => (
-            <div key={flower.id} style={{ 
-              display: 'flex', alignItems: 'center', padding: '10px', 
-              border: '1px solid #e5e7eb', marginBottom: '8px', borderRadius: '8px',
-              background: index < 3 ? '#ecfdf5' : 'white',
-              transition: 'background 0.3s'
-            }}>
-              <span style={{ marginRight: '12px', fontSize: '24px' }}>{flower.icon}</span>
-              <span style={{ flexGrow: 1, fontSize: '15px' }}>{index + 1}. {flower.name}</span>
-              <div style={{ display: 'flex', gap: '4px' }}>
-                <button onClick={() => move(index, -1)} style={{ padding: '5px 10px', cursor: 'pointer' }}>↑</button>
-                <button onClick={() => move(index, 1)} style={{ padding: '5px 10px', cursor: 'pointer' }}>↓</button>
-              </div>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
+        <div style={{ background: 'rgba(255, 255, 255, 0.4)', padding: '5px 15px', borderRadius: '20px', display: 'inline-block', fontSize: '14px', color: '#6366f1', fontWeight: 'bold', marginBottom: '10px' }}>
+          {expertId}
+        </div>
+
+        {view === 'vote' ? (
+          <>
+            <h1 style={{ color: '#1f2937', marginBottom: '40px' }}>Оберіть ваші 3 найулюбленіші рослини</h1>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '15px' }}>
+              {flowers.map((f) => {
+                const isSelected = selected.includes(f.id);
+                const rank = selected.indexOf(f.id) + 1;
+                return (
+                  <div key={f.id} onClick={() => toggleSelect(f.id)} style={cardStyle(isSelected)}>
+                    <span style={{ fontSize: '32px' }}>{f.icon}</span>
+                    <span style={{ fontWeight: '500', color: '#4b5563' }}>{f.name}</span>
+                    {isSelected && <div style={rankBadgeStyle}>{rank}</div>}
+                  </div>
+                );
+              })}
             </div>
-          ))}
-
-          <button onClick={submitVote} style={{ 
-            width: '100%', padding: '16px', background: '#059669', 
-            color: 'white', border: 'none', borderRadius: '8px', marginTop: '20px',
-            fontSize: '16px', fontWeight: 'bold', cursor: 'pointer'
-          }}>
-            Надіслати анонімно
-          </button>
-        </div>
-      ) : (
-        <div style={{ textAlign: 'center', padding: '40px', backgroundColor: 'white', borderRadius: '12px' }}>
-          <h2 style={{ color: '#059669' }}>Дякуємо, {expertId}! ✅</h2>
-          <p>Ваше множинне порівняння збережено в протоколі.</p>
-          <button onClick={() => setVoted(false)} style={{ color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Проголосувати ще раз</button>
-        </div>
-      )}
+            <button onClick={handleVote} style={mainBtnStyle}>Підтвердити вибір (v=3)</button>
+          </>
+        ) : (
+          <div style={{ background: 'white', padding: '30px', borderRadius: '20px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', textAlign: 'left' }}>
+            <h2 style={{ color: '#1f2937' }}>📊 Протокол результатів (Адмін-панель)</h2>
+            <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
+              <thead>
+                <tr style={{ borderBottom: '2px solid #f3f4f6' }}>
+                  <th style={{ padding: '10px' }}>Експерт</th>
+                  <th style={{ padding: '10px' }}>Вибір (1 > 2 > 3)</th>
+                  <th style={{ padding: '10px' }}>Час</th>
+                </tr>
+              </thead>
+              <tbody>
+                {allVotes.length > 0 ? allVotes.map((v, i) => (
+                  <tr key={i} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                    <td style={{ padding: '10px' }}>{v.expert}</td>
+                    <td style={{ padding: '10px' }}>{v.choices.join(' > ')}</td>
+                    <td style={{ padding: '10px', color: '#9ca3af' }}>{v.time}</td>
+                  </tr>
+                )) : <tr><td colSpan="3" style={{ padding: '20px', textAlign: 'center' }}>Голосів ще немає</td></tr>}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
+
+// Стилі
+const navBtnStyle = (active) => ({
+  padding: '10px 20px', borderRadius: '12px', border: 'none', cursor: 'pointer',
+  background: active ? 'white' : 'transparent', color: active ? '#1f2937' : '#6b7280',
+  boxShadow: active ? '0 4px 6px rgba(0,0,0,0.05)' : 'none', fontWeight: '500', transition: '0.3s'
+});
+
+const cardStyle = (active) => ({
+  background: 'white', padding: '20px', borderRadius: '15px', cursor: 'pointer',
+  display: 'flex', alignItems: 'center', gap: '15px', transition: '0.2s',
+  boxShadow: active ? '0 0 0 3px #6366f1' : '0 4px 6px rgba(0,0,0,0.02)',
+  position: 'relative', transform: active ? 'scale(1.02)' : 'none'
+});
+
+const rankBadgeStyle = {
+  position: 'absolute', right: '15px', top: '50%', transform: 'translateY(-50%)',
+  background: '#6366f1', color: 'white', width: '24px', height: '24px', borderRadius: '50%',
+  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold'
+};
+
+const mainBtnStyle = {
+  marginTop: '40px', padding: '15px 40px', borderRadius: '30px', border: 'none',
+  background: '#6366f1', color: 'white', fontSize: '16px', fontWeight: 'bold',
+  cursor: 'pointer', boxShadow: '0 10px 20px rgba(99, 102, 241, 0.3)'
+};
