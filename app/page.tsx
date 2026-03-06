@@ -1,6 +1,5 @@
 "use client";
 import React, { useState } from 'react';
-import Image from 'next/image';
 
 const flowers = [
   { id: 'f1', name: 'Червона Троянда', img: 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800' },
@@ -12,7 +11,7 @@ const flowers = [
   { id: 'f7', name: 'Півонія', img: 'https://images.unsplash.com/photo-1562690868-60bbe7293e94?w=800' },
   { id: 'f8', name: 'Магнолія', img: 'https://images.unsplash.com/photo-1559825481-12a9009a6d8b?w=800' },
   { id: 'f9', name: 'Сакура', img: 'https://images.unsplash.com/photo-1522383225653-ed111181a951?w=800' },
-  { id: 'f10', name: 'Гортензія', img: 'https://images.unsplash.com/photo-1587814329398-7f0a2b0e2c2a?w=800' },
+  { id: 'f10', name: 'Гортензія', img: 'https://unsplash.com/photos/green-leafed-plant-with-purple-flowers-_SAVhxRL2U8' },
   { id: 'f11', name: 'Ірис', img: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=800' },
   { id: 'f12', name: 'Лотос', img: 'https://images.unsplash.com/photo-1580130684518-9e9c4d1a0f8b?w=800' },
   { id: 'f13', name: 'Гібіскус', img: 'https://images.unsplash.com/photo-1570545884426-1c9a0b7f5c3e?w=800' },
@@ -58,10 +57,7 @@ export default function Lab1App() {
     const record: VoteRecord = {
       expert,
       choices: selected.map(id => flowers.find(f => f.id === id)!.name),
-      time: new Date().toLocaleTimeString('uk-UA', {
-        hour: '2-digit',
-        minute: '2-digit'
-      })
+      time: new Date().toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })
     };
     setVotes(prev => [...prev, record]);
     setIsDone(true);
@@ -72,7 +68,6 @@ export default function Lab1App() {
     setIsDone(false);
   };
 
-  // Підрахунок медалей
   const medalCounts = flowers.reduce((acc, flower) => {
     acc[flower.name] = [0, 0, 0];
     return acc;
@@ -87,19 +82,19 @@ export default function Lab1App() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #0f081f 0%, #1e1433 100%)',
-      color: '#e6d9ff',
+      background: 'linear-gradient(135deg, #fdf9f4 0%, #f8f0e8 100%)',
+      color: '#3f2c29',
       paddingBottom: '140px',
       fontFamily: 'system-ui, -apple-system, sans-serif'
     }}>
       {/* Навігація */}
       <nav style={{
         padding: '20px 5%',
-        borderBottom: '1px solid #3b2a66',
+        borderBottom: '1px solid #e8d9d0',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        background: 'rgba(30, 20, 51, 0.95)',
+        background: 'rgba(255, 248, 240, 0.97)',
         backdropFilter: 'blur(20px)',
         position: 'sticky',
         top: 0,
@@ -107,8 +102,8 @@ export default function Lab1App() {
       }}>
         <h2 style={{
           fontSize: '1.15rem',
-          letterSpacing: '2px',
-          color: '#c4b5fd',
+          letterSpacing: '1.5px',
+          color: '#3f2c29',
           margin: 0,
           fontWeight: '700'
         }}>
@@ -117,17 +112,17 @@ export default function Lab1App() {
         <button
           onClick={() => setView(view === 'results' ? 'vote' : 'login')}
           style={{
-            background: '#2a1f4d',
-            border: '1px solid #5b4a8a',
-            color: '#e0d4ff',
+            background: '#f8f0e8',
+            border: '1px solid #e8d9d0',
+            color: '#3f2c29',
             padding: '10px 22px',
             borderRadius: '12px',
             cursor: 'pointer',
             fontWeight: '600',
             transition: 'all 0.2s'
           }}
-          onMouseOver={(e) => e.currentTarget.style.background = '#3b2a66'}
-          onMouseOut={(e) => e.currentTarget.style.background = '#2a1f4d'}
+          onMouseOver={(e) => e.currentTarget.style.background = '#f0e4d8'}
+          onMouseOut={(e) => e.currentTarget.style.background = '#f8f0e8'}
         >
           {view === 'results' ? '← Повернутися' : '🔑 Вхід для викладача'}
         </button>
@@ -139,9 +134,9 @@ export default function Lab1App() {
             <h1 style={{
               textAlign: 'center',
               fontSize: '2.05rem',
-              fontWeight: '800',
+              fontWeight: '700',
               marginBottom: '50px',
-              color: '#e6d9ff',
+              color: '#3f2c29',
               lineHeight: '1.15'
             }}>
               Оберіть 3 найпрекрасніші квіти<br />(місця 1–3)
@@ -159,24 +154,22 @@ export default function Lab1App() {
                     key={f.id}
                     onClick={() => handleSelect(f.id)}
                     style={{
-                      background: '#1f1833',
+                      background: '#ffffff',
                       borderRadius: '24px',
                       overflow: 'hidden',
                       cursor: isDone ? 'default' : 'pointer',
-                      border: isSel ? '3px solid #c4b5fd' : '1px solid #3b2a66',
+                      border: isSel ? '3px solid #e8b4b0' : '1px solid #f0e4d8',
                       transition: 'all 0.3s ease',
                       position: 'relative',
                       boxShadow: isSel
-                        ? '0 20px 35px rgba(196, 181, 253, 0.18)'
-                        : '0 10px 25px rgba(0,0,0,0.25)',
+                        ? '0 20px 35px rgba(232, 180, 176, 0.15)'
+                        : '0 10px 25px rgba(0,0,0,0.08)',
                       transform: isSel ? 'translateY(-4px)' : 'none'
                     }}
                   >
-                    <Image
+                    <img
                       src={f.img}
                       alt={f.name}
-                      width={800}
-                      height={530}
                       style={{
                         width: '100%',
                         height: '205px',
@@ -189,7 +182,7 @@ export default function Lab1App() {
                       textAlign: 'center',
                       fontSize: '1rem',
                       fontWeight: '600',
-                      color: '#d1c4ff'
+                      color: '#3f2c29'
                     }}>
                       {f.name}
                     </div>
@@ -198,13 +191,14 @@ export default function Lab1App() {
                         position: 'absolute',
                         top: '14px',
                         left: '14px',
-                        background: '#2a1f4d',
-                        color: '#c4b5fd',
+                        background: '#ffffff',
+                        color: '#3f2c29',
                         padding: '6px 14px',
                         borderRadius: '9999px',
                         fontSize: '0.95rem',
                         fontWeight: '800',
-                        border: '1px solid #c4b5fd'
+                        border: '1px solid #e8b4b0',
+                        boxShadow: '0 4px 12px rgba(232, 180, 176, 0.2)'
                       }}>
                         {MEDALS[idx]}
                       </div>
@@ -218,15 +212,15 @@ export default function Lab1App() {
           <div style={{
             maxWidth: '420px',
             margin: '120px auto',
-            background: '#1f1833',
+            background: '#ffffff',
             padding: '50px 40px',
             borderRadius: '24px',
             textAlign: 'center',
-            border: '1px solid #3b2a66',
-            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)'
+            border: '1px solid #f0e4d8',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.07)'
           }}>
             <div style={{ fontSize: '3rem', marginBottom: '20px' }}>🌸</div>
-            <h2 style={{ marginBottom: '30px', fontWeight: '700', fontSize: '1.75rem', color: '#e6d9ff' }}>Вхід для викладача</h2>
+            <h2 style={{ marginBottom: '30px', fontWeight: '700', fontSize: '1.75rem', color: '#3f2c29' }}>Вхід для викладача</h2>
             <div style={{ position: 'relative', marginBottom: '25px' }}>
               <input
                 type={showPass ? "text" : "password"}
@@ -236,9 +230,9 @@ export default function Lab1App() {
                   width: '100%',
                   padding: '16px 20px',
                   borderRadius: '14px',
-                  border: '2px solid #3b2a66',
-                  background: '#0f081f',
-                  color: '#e6d9ff',
+                  border: '2px solid #f0e4d8',
+                  background: '#fdf9f4',
+                  color: '#3f2c29',
                   fontSize: '1.05rem'
                 }}
               />
@@ -253,7 +247,7 @@ export default function Lab1App() {
                   border: 'none',
                   cursor: 'pointer',
                   fontSize: '1.4rem',
-                  color: '#a5a0cc'
+                  color: '#b89f96'
                 }}
               >
                 {showPass ? '🔒' : '👁️'}
@@ -263,8 +257,8 @@ export default function Lab1App() {
               onClick={() => pass === 'lr1_2026' ? setView('results') : alert('Невірний пароль!')}
               style={{
                 width: '100%',
-                background: 'linear-gradient(to right, #a78bfa, #c4b5fd)',
-                color: '#0f081f',
+                background: 'linear-gradient(to right, #e8b4b0, #d8a7a0)',
+                color: '#ffffff',
                 border: 'none',
                 padding: '16px',
                 borderRadius: '14px',
@@ -278,34 +272,34 @@ export default function Lab1App() {
             </button>
           </div>
         ) : (
-          /* ПРОТОКОЛ (3 стовпці-медалі, квіти — рядки) */
+          /* ПРОТОКОЛ */
           <div style={{
-            background: '#1f1833',
+            background: '#ffffff',
             padding: '40px',
             borderRadius: '24px',
-            border: '1px solid #3b2a66',
-            boxShadow: '0 20px 40px -15px rgba(0,0,0,0.6)'
+            border: '1px solid #f0e4d8',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.07)'
           }}>
             <div style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
               marginBottom: '30px',
-              borderBottom: '2px solid #3b2a66',
+              borderBottom: '2px solid #f0e4d8',
               paddingBottom: '20px'
             }}>
-              <h2 style={{ fontWeight: '700', fontSize: '1.85rem', margin: 0, color: '#e6d9ff' }}>
+              <h2 style={{ fontWeight: '700', fontSize: '1.85rem', margin: 0, color: '#3f2c29' }}>
                 📋 Протокол голосування
               </h2>
               <div style={{
-                background: '#2a1f4d',
+                background: '#fdf9f4',
                 padding: '8px 18px',
                 borderRadius: '9999px',
                 fontSize: '0.95rem',
                 fontWeight: '700',
-                color: '#c4b5fd'
+                color: '#3f2c29'
               }}>
-                Голосів: <span style={{ color: '#e6d9ff' }}>{votes.length}</span>
+                Голосів: <span style={{ color: '#3f2c29' }}>{votes.length}</span>
               </div>
             </div>
 
@@ -321,31 +315,31 @@ export default function Lab1App() {
                     <th style={{
                       textAlign: 'left',
                       padding: '16px 24px',
-                      background: '#2a1f4d',
+                      background: '#fdf9f4',
                       borderRadius: '14px 0 0 14px',
-                      color: '#c4b5fd',
+                      color: '#3f2c29',
                       fontWeight: '700'
                     }}>Квітка</th>
                     <th style={{
                       textAlign: 'center',
                       padding: '16px 24px',
-                      background: '#2a1f4d',
-                      color: '#c4b5fd',
+                      background: '#fdf9f4',
+                      color: '#3f2c29',
                       fontWeight: '700'
                     }}>🥇 1-е місце</th>
                     <th style={{
                       textAlign: 'center',
                       padding: '16px 24px',
-                      background: '#2a1f4d',
-                      color: '#c4b5fd',
+                      background: '#fdf9f4',
+                      color: '#3f2c29',
                       fontWeight: '700'
                     }}>🥈 2-е місце</th>
                     <th style={{
                       textAlign: 'center',
                       padding: '16px 24px',
-                      background: '#2a1f4d',
+                      background: '#fdf9f4',
                       borderRadius: '0 14px 14px 0',
-                      color: '#c4b5fd',
+                      color: '#3f2c29',
                       fontWeight: '700'
                     }}>🥉 3-є місце</th>
                   </tr>
@@ -357,35 +351,35 @@ export default function Lab1App() {
                       <tr key={flower.id}>
                         <td style={{
                           padding: '18px 24px',
-                          background: '#2a1f4d44',
+                          background: '#fdf9f4',
                           borderRadius: '14px 0 0 14px',
-                          border: '1px solid #3b2a66',
+                          border: '1px solid #f0e4d8',
                           fontWeight: '600',
-                          color: '#e6d9ff'
+                          color: '#3f2c29'
                         }}>{flower.name}</td>
                         <td style={{
                           textAlign: 'center',
                           padding: '18px 24px',
-                          background: '#2a1f4d44',
-                          borderTop: '1px solid #3b2a66',
-                          borderBottom: '1px solid #3b2a66',
-                          color: '#c4b5fd'
+                          background: '#fdf9f4',
+                          borderTop: '1px solid #f0e4d8',
+                          borderBottom: '1px solid #f0e4d8',
+                          color: '#3f2c29'
                         }}>{counts[0]}</td>
                         <td style={{
                           textAlign: 'center',
                           padding: '18px 24px',
-                          background: '#2a1f4d44',
-                          borderTop: '1px solid #3b2a66',
-                          borderBottom: '1px solid #3b2a66',
-                          color: '#c4b5fd'
+                          background: '#fdf9f4',
+                          borderTop: '1px solid #f0e4d8',
+                          borderBottom: '1px solid #f0e4d8',
+                          color: '#3f2c29'
                         }}>{counts[1]}</td>
                         <td style={{
                           textAlign: 'center',
                           padding: '18px 24px',
-                          background: '#2a1f4d44',
+                          background: '#fdf9f4',
                           borderRadius: '0 14px 14px 0',
-                          border: '1px solid #3b2a66',
-                          color: '#c4b5fd'
+                          border: '1px solid #f0e4d8',
+                          color: '#3f2c29'
                         }}>{counts[2]}</td>
                       </tr>
                     );
@@ -397,16 +391,16 @@ export default function Lab1App() {
         )}
       </main>
 
-      {/* Нижня панель вибраного */}
+      {/* Нижня панель */}
       {selected.length > 0 && view === 'vote' && (
         <div style={{
           position: 'fixed',
           bottom: 0,
           left: 0,
           right: 0,
-          background: 'rgba(30, 20, 51, 0.96)',
+          background: 'rgba(255, 248, 240, 0.97)',
           backdropFilter: 'blur(24px)',
-          borderTop: '3px solid #c4b5fd',
+          borderTop: '3px solid #e8b4b0',
           padding: '22px 20px',
           zIndex: 1000
         }}>
@@ -427,17 +421,17 @@ export default function Lab1App() {
                     key={id}
                     style={{
                       fontSize: '1rem',
-                      background: '#2a1f4d',
+                      background: '#ffffff',
                       padding: '12px 20px',
                       borderRadius: '14px',
-                      border: '1px solid #3b2a66',
+                      border: '1px solid #f0e4d8',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
-                      color: '#e6d9ff'
+                      color: '#3f2c29'
                     }}
                   >
-                    <span style={{ color: '#c4b5fd', fontWeight: '800' }}>
+                    <span style={{ color: '#e8b4b0', fontWeight: '800' }}>
                       {idx + 1}:
                     </span>
                     {name}
@@ -450,8 +444,8 @@ export default function Lab1App() {
                 onClick={resetVote}
                 style={{
                   background: 'transparent',
-                  border: '2px solid #c4b5fd',
-                  color: '#c4b5fd',
+                  border: '2px solid #e8b4b0',
+                  color: '#e8b4b0',
                   padding: '12px 26px',
                   borderRadius: '14px',
                   cursor: 'pointer',
@@ -464,9 +458,9 @@ export default function Lab1App() {
                 <button
                   onClick={confirmVote}
                   style={{
-                    background: 'linear-gradient(to right, #a78bfa, #c4b5fd)',
+                    background: 'linear-gradient(to right, #e8b4b0, #d8a7a0)',
                     border: 'none',
-                    color: '#0f081f',
+                    color: '#ffffff',
                     padding: '12px 36px',
                     borderRadius: '14px',
                     cursor: 'pointer',
