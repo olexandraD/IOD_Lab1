@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, push, onValue } from "firebase/database";
+import { getDatabase, ref, push, onValue, set } from "firebase/database";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA3scwKpLRt8NG9_n4LHLJGrjP_y0lxNX0",
@@ -21,7 +21,7 @@ const flowers = [
   { id: 'f1', name: 'Біла Лілія', img: '/images/f1.jpg' },
   { id: 'f2', name: 'Ранункулюс', img: '/images/f2.jpg' },
   { id: 'f3', name: 'Лотос', img: '/images/f3.jpg' },
-  { id: 'f4', name: 'Орхіддея', img: '/images/f4.jpg' },
+  { id: 'f4', name: 'Орхідея', img: '/images/f4.jpg' },
   { id: 'f5', name: 'Соняшник', img: '/images/f5.jpg' },
   { id: 'f6', name: 'Тюльпан', img: '/images/f6.jpg' },
   { id: 'f7', name: 'Червона Троянда', img: '/images/f7.jpg' },
@@ -63,6 +63,8 @@ export default function Lab1App() {
       if (data) {
         const votesList = Object.values(data) as VoteRecord[];
         setVotes(votesList);
+      } else {
+        setVotes([]); // Очищення списку, якщо в БД порожньо
       }
     });
   }, []);
@@ -91,6 +93,18 @@ export default function Lab1App() {
     } catch (err) {
       console.error(err);
       alert("Помилка з'єднання з базою!");
+    }
+  };
+
+  const clearDatabase = async () => {
+    if (window.confirm("Ви впевнені, що хочете видалити ВСІ голоси з бази даних?")) {
+      try {
+        await set(ref(db, 'votes'), null); // Видалення вузла 'votes'
+        alert("Базу даних успішно очищено!");
+      } catch (err) {
+        console.error(err);
+        alert("Помилка при очищенні бази!");
+      }
     }
   };
 
@@ -125,7 +139,7 @@ export default function Lab1App() {
         top: 0,
         zIndex: 100
       }}>
-        <h2 style={{ fontSize: '1.2rem', color: '#1f2937', margin: 0, fontWeight: '700', letterSpacing: '1px' }}>
+        <h2 style={{ fontSize: '1.2rem', color: '#1f2937', margin: 0, fontWeight: '700' }}>
           ЛР1 • Розподілене введення даних
         </h2>
         <button
@@ -147,7 +161,7 @@ export default function Lab1App() {
       <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '50px 20px' }}>
         {view === 'vote' ? (
           <>
-            <h1 style={{ textAlign: 'center', fontSize: '2.2rem', fontWeight: '700', marginBottom: '50px', lineHeight: '1.15' }}>
+            <h1 style={{ textAlign: 'center', fontSize: '2.2rem', fontWeight: '700', marginBottom: '50px' }}>
               Оберіть 3 найулюбленіші квітки
             </h1>
             <div style={{
@@ -169,18 +183,17 @@ export default function Lab1App() {
                     border: isSel ? '3px solid #ec4899' : '1px solid #ffe4e1',
                     position: 'relative',
                     transition: 'all 0.3s ease',
-                    // Ефект справжнього затемнення
                     filter: anySelected && !isSel ? 'brightness(0.4) grayscale(0.2)' : 'none',
                     transform: isSel ? 'translateY(-6px)' : 'none',
                     boxShadow: isSel ? '0 20px 35px rgba(236, 72, 153, 0.18)' : '0 10px 25px rgba(0,0,0,0.07)'
                   }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={f.img} alt={f.name} style={{ width: '100%', height: '210px', objectFit: 'cover' }} />
-                    <div style={{ padding: '16px 12px', textAlign: 'center', fontWeight: '600', fontSize: '1rem' }}>{f.name}</div>
+                    <div style={{ padding: '16px 12px', textAlign: 'center', fontWeight: '600' }}>{f.name}</div>
                     {isSel && (
                       <div style={{
                         position: 'absolute', top: '14px', left: '14px', background: '#ec4899',
-                        color: 'white', padding: '6px 14px', borderRadius: '9999px', fontWeight: '700', fontSize: '0.95rem'
+                        color: 'white', padding: '6px 14px', borderRadius: '9999px', fontWeight: '700'
                       }}>
                         {MEDALS[idx]}
                       </div>
@@ -213,13 +226,13 @@ export default function Lab1App() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
               <button
                 onClick={() => pass === 'lr1_2026' ? setView('results') : alert('Невірний пароль!')}
-                style={{ width: '100%', background: 'linear-gradient(to right, #ec4899, #db2777)', color: 'white', border: 'none', padding: '16px', borderRadius: '14px', fontWeight: '700', fontSize: '1.1rem', cursor: 'pointer' }}
+                style={{ width: '100%', background: 'linear-gradient(to right, #ec4899, #db2777)', color: 'white', border: 'none', padding: '16px', borderRadius: '14px', fontWeight: '700', cursor: 'pointer' }}
               >
                 УВІЙТИ В ПРОТОКОЛ
               </button>
               <button
                 onClick={() => setView('vote')}
-                style={{ width: '100%', background: 'transparent', color: '#6b7280', border: 'none', padding: '10px', fontSize: '0.9rem', cursor: 'pointer', textDecoration: 'underline' }}
+                style={{ width: '100%', background: 'transparent', color: '#6b7280', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
               >
                 Скасувати та повернутись
               </button>
@@ -227,10 +240,18 @@ export default function Lab1App() {
           </div>
         ) : (
           <div style={{ background: '#ffffff', padding: '40px', borderRadius: '20px', border: '1px solid #ffe4e1', boxShadow: '0 20px 40px rgba(0,0,0,0.08)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', borderBottom: '2px solid #ffe4e1', paddingBottom: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', borderBottom: '2px solid #ffe4e1', paddingBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
               <h2 style={{ fontWeight: '700', fontSize: '1.85rem', margin: 0 }}>📋 Протокол голосування</h2>
-              <div style={{ background: '#fdfaf7', padding: '8px 18px', borderRadius: '9999px', fontSize: '0.95rem', fontWeight: '700' }}>
-                Голосів: <span style={{ color: '#ec4899' }}>{votes.length}</span>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <div style={{ background: '#fdfaf7', padding: '8px 18px', borderRadius: '9999px', fontSize: '0.95rem', fontWeight: '700' }}>
+                  Голосів: <span style={{ color: '#ec4899' }}>{votes.length}</span>
+                </div>
+                <button 
+                  onClick={clearDatabase}
+                  style={{ background: '#ef4444', color: 'white', border: 'none', padding: '10px 18px', borderRadius: '14px', fontWeight: '700', cursor: 'pointer', fontSize: '0.85rem' }}
+                >
+                  🗑️ ОЧИСТИТИ БД
+                </button>
               </div>
             </div>
             <div style={{ overflowX: 'auto' }}>
@@ -272,12 +293,12 @@ export default function Lab1App() {
           <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
               {selected.map((id, idx) => (
-                <div key={id} style={{ background: 'white', padding: '10px 18px', borderRadius: '12px', border: '1px solid #ffe4e1', fontSize: '0.9rem', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+                <div key={id} style={{ background: 'white', padding: '10px 18px', borderRadius: '12px', border: '1px solid #ffe4e1', fontSize: '0.9rem' }}>
                   <b style={{ color: '#ec4899' }}>{idx + 1}:</b> {flowers.find(f => f.id === id)?.name}
                 </div>
               ))}
             </div>
-            <div style={{ display: 'flex', gap: '10px', width: '100%', justifyContent: 'center', padding: '0 10px' }}>
+            <div style={{ display: 'flex', gap: '10px', width: '100%', justifyContent: 'center' }}>
               <button 
                 onClick={() => { setSelected([]); setIsDone(false); }} 
                 style={{ flex: 1, maxWidth: '140px', background: 'white', border: '2px solid #ec4899', color: '#ec4899', padding: '14px', borderRadius: '14px', fontWeight: '600', cursor: 'pointer' }}
@@ -287,7 +308,7 @@ export default function Lab1App() {
               {!isDone && (
                 <button 
                   onClick={confirmVote} 
-                  style={{ flex: 2, maxWidth: '280px', background: 'linear-gradient(to right, #ec4899, #db2777)', color: 'white', border: 'none', padding: '14px', borderRadius: '14px', fontWeight: '700', fontSize: '1.05rem', cursor: 'pointer', boxShadow: '0 6px 20px rgba(236, 72, 153, 0.3)' }}
+                  style={{ flex: 2, maxWidth: '280px', background: 'linear-gradient(to right, #ec4899, #db2777)', color: 'white', border: 'none', padding: '14px', borderRadius: '14px', fontWeight: '700', cursor: 'pointer', boxShadow: '0 6px 20px rgba(236, 72, 153, 0.3)' }}
                 >
                   ПІДТВЕРДИТИ ✅
                 </button>
