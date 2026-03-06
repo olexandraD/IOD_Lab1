@@ -87,10 +87,10 @@ export default function Lab1App() {
     try {
       await push(ref(db, 'votes'), record);
       setIsDone(true);
-      alert("Ваш голос враховано анонімно!"); [cite: 7]
+      alert("Ваш голос враховано анонімно!");
     } catch (err) {
       console.error(err);
-      alert("Помилка з&apos;єднання з базою!");
+      alert("Помилка з'єднання з базою!");
     }
   };
 
@@ -218,7 +218,7 @@ export default function Lab1App() {
         ) : (
           <div style={{ background: '#ffffff', padding: '25px', borderRadius: '20px', border: '1px solid #ffe4e1', boxShadow: '0 20px 40px rgba(0,0,0,0.08)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', borderBottom: '2px solid #ffe4e1', paddingBottom: '15px' }}>
-              <h2 style={{ fontWeight: '700', fontSize: '1.4rem', margin: 0 }}>📋 Протокол голосування</h2> [cite: 68]
+              <h2 style={{ fontWeight: '700', fontSize: '1.4rem', margin: 0 }}>📋 Протокол голосування</h2>
               <div style={{ background: '#fdfaf7', padding: '6px 14px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '700' }}>
                 Голосів: <span style={{ color: '#ec4899' }}>{votes.length}</span>
               </div>
@@ -278,7 +278,7 @@ export default function Lab1App() {
                   style={{ flex: 2, maxWidth: '240px', background: 'linear-gradient(to right, #ec4899, #db2777)', color: 'white', border: 'none', padding: '12px', borderRadius: '12px', fontWeight: '700', cursor: 'pointer' }}
                 >
                   ПІДТВЕРДИТИ ✅
-                </button> [cite: 5]
+                </button>
               )}
             </div>
           </div>
