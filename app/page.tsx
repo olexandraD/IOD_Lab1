@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, push, onValue, set } from "firebase/database";
 
+// Конфігурація Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyA3scwKpLRt8NG9_n4LHLJGrjP_y0lxNX0",
   authDomain: "iou-lab1.firebaseapp.com",
@@ -14,6 +15,7 @@ const firebaseConfig = {
   measurementId: "G-QXW6RLDGX8"
 };
 
+// Ініціалізація
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
@@ -56,6 +58,7 @@ export default function Lab1App() {
   const [showPass, setShowPass] = useState(false);
   const [pass, setPass] = useState('');
 
+  // Слухач бази даних у реальному часі 
   useEffect(() => {
     const votesRef = ref(db, 'votes');
     return onValue(votesRef, (snapshot) => {
@@ -64,7 +67,7 @@ export default function Lab1App() {
         const votesList = Object.values(data) as VoteRecord[];
         setVotes(votesList);
       } else {
-        setVotes([]); // Очищення списку, якщо в БД порожньо
+        setVotes([]);
       }
     });
   }, []);
@@ -79,7 +82,8 @@ export default function Lab1App() {
   };
 
   const confirmVote = async () => {
-    if (selected.length !== 3) return alert("Будь ласка, оберіть рівно 3 квіти!");
+    if (selected.length !== 3) return alert("Оберіть 3 квіти!");
+    // Анонімізація експерта згідно з ЛР 
     const expertId = `ID-${Math.floor(1000 + Math.random() * 9000)}`;
     const record: VoteRecord = {
       expert: expertId,
@@ -99,7 +103,7 @@ export default function Lab1App() {
   const clearDatabase = async () => {
     if (window.confirm("Ви впевнені, що хочете видалити ВСІ голоси з бази даних?")) {
       try {
-        await set(ref(db, 'votes'), null); // Видалення вузла 'votes'
+        await set(ref(db, 'votes'), null);
         alert("Базу даних успішно очищено!");
       } catch (err) {
         console.error(err);
@@ -108,6 +112,7 @@ export default function Lab1App() {
     }
   };
 
+  // Розрахунок результатів 
   const medalCounts = flowers.reduce<Record<string, [number, number, number]>>((acc, flower) => {
     acc[flower.name] = [0, 0, 0];
     return acc;
@@ -117,6 +122,15 @@ export default function Lab1App() {
     vote.choices.forEach((choice, idx) => {
       if (medalCounts[choice]) medalCounts[choice][idx]++;
     });
+  });
+
+  // Пріоритетне сортування за 1-м місцем
+  const sortedFlowers = [...flowers].sort((a, b) => {
+    const countsA = medalCounts[a.name] || [0, 0, 0];
+    const countsB = medalCounts[b.name] || [0, 0, 0];
+    if (countsB[0] !== countsA[0]) return countsB[0] - countsA[0];
+    if (countsB[1] !== countsA[1]) return countsB[1] - countsA[1];
+    return countsB[2] - countsA[2];
   });
 
   return (
@@ -139,9 +153,7 @@ export default function Lab1App() {
         top: 0,
         zIndex: 100
       }}>
-        <h2 style={{ fontSize: '1.2rem', color: '#1f2937', margin: 0, fontWeight: '700' }}>
-          ЛР1 • Розподілене введення даних
-        </h2>
+        <h2 style={{ fontSize: '1.2rem', color: '#1f2937', margin: 0, fontWeight: '700' }}>ЛР1 • ІОД</h2>
         <button
           onClick={() => setView(view === 'results' ? 'vote' : 'login')}
           style={{
@@ -210,7 +222,7 @@ export default function Lab1App() {
             <div style={{ position: 'relative', marginBottom: '25px' }}>
               <input
                 type={showPass ? "text" : "password"}
-                placeholder="Введіть пароль"
+                placeholder="Пароль"
                 value={pass}
                 onChange={e => setPass(e.target.value)}
                 style={{ width: '100%', padding: '16px 20px', borderRadius: '14px', border: '2px solid #ffe4e1', background: '#fdfaf7', outline: 'none' }}
@@ -239,6 +251,7 @@ export default function Lab1App() {
             </div>
           </div>
         ) : (
+          /* ПРОТОКОЛ АДМІНА [cite: 33, 68] */
           <div style={{ background: '#ffffff', padding: '40px', borderRadius: '20px', border: '1px solid #ffe4e1', boxShadow: '0 20px 40px rgba(0,0,0,0.08)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', borderBottom: '2px solid #ffe4e1', paddingBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
               <h2 style={{ fontWeight: '700', fontSize: '1.85rem', margin: 0 }}>📋 Протокол голосування</h2>
@@ -258,23 +271,24 @@ export default function Lab1App() {
               <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 12px' }}>
                 <thead>
                   <tr style={{ color: '#1f2937', fontWeight: '700' }}>
-                    <th style={{ textAlign: 'left', padding: '16px 24px', background: '#fdfaf7', borderRadius: '14px 0 0 14px' }}>Квітка</th>
+                    <th style={{ textAlign: 'left', padding: '16px 24px', background: '#fdfaf7', borderRadius: '14px 0 0 14px' }}>Квітка (За рейтингом)</th>
                     <th style={{ textAlign: 'center', background: '#fdfaf7' }}>🥇 1-е місце</th>
                     <th style={{ textAlign: 'center', background: '#fdfaf7' }}>🥈 2-е місце</th>
                     <th style={{ textAlign: 'center', background: '#fdfaf7', borderRadius: '0 14px 14px 0' }}>🥉 3-є місце</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {flowers.map((flower) => {
+                  {sortedFlowers.map((flower, idx) => {
                     const counts = medalCounts[flower.name] || [0, 0, 0];
+                    const hasVotes = counts.some(c => c > 0);
                     return (
                       <tr key={flower.id}>
-                        <td style={{ padding: '18px 24px', background: '#fdfaf7', borderRadius: '14px 0 0 14px', border: '1px solid #ffe4e1', fontWeight: '600' }}>
-                          {flower.name}
+                        <td style={{ padding: '18px 24px', background: idx === 0 && hasVotes ? '#fffaf0' : '#fdfaf7', borderRadius: '14px 0 0 14px', border: idx === 0 && hasVotes ? '1px solid #fbbf24' : '1px solid #ffe4e1', fontWeight: '600' }}>
+                          {idx === 0 && hasVotes && '👑 '}{flower.name}
                         </td>
-                        <td style={{ textAlign: 'center', background: '#fdfaf7', borderTop: '1px solid #ffe4e1', borderBottom: '1px solid #ffe4e1', color: '#ec4899', fontWeight: '700' }}>{counts[0]}</td>
-                        <td style={{ textAlign: 'center', background: '#fdfaf7', borderTop: '1px solid #ffe4e1', borderBottom: '1px solid #ffe4e1', color: '#ec4899', fontWeight: '700' }}>{counts[1]}</td>
-                        <td style={{ textAlign: 'center', background: '#fdfaf7', borderRadius: '0 14px 14px 0', border: '1px solid #ffe4e1', color: '#ec4899', fontWeight: '700' }}>{counts[2]}</td>
+                        <td style={{ textAlign: 'center', background: idx === 0 && hasVotes ? '#fffaf0' : '#fdfaf7', borderTop: '1px solid #ffe4e1', borderBottom: '1px solid #ffe4e1', color: '#ec4899', fontWeight: '700', fontSize: '1.1rem' }}>{counts[0]}</td>
+                        <td style={{ textAlign: 'center', background: idx === 0 && hasVotes ? '#fffaf0' : '#fdfaf7', borderTop: '1px solid #ffe4e1', borderBottom: '1px solid #ffe4e1', color: '#ec4899', fontWeight: '700' }}>{counts[1]}</td>
+                        <td style={{ textAlign: 'center', background: idx === 0 && hasVotes ? '#fffaf0' : '#fdfaf7', borderRadius: '0 14px 14px 0', border: '1px solid #ffe4e1', color: '#ec4899', fontWeight: '700' }}>{counts[2]}</td>
                       </tr>
                     );
                   })}
@@ -293,7 +307,7 @@ export default function Lab1App() {
           <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
               {selected.map((id, idx) => (
-                <div key={id} style={{ background: 'white', padding: '10px 18px', borderRadius: '12px', border: '1px solid #ffe4e1', fontSize: '0.9rem' }}>
+                <div key={id} style={{ background: 'white', padding: '10px 18px', borderRadius: '12px', border: '1px solid #ffe4e1', fontSize: '0.8rem' }}>
                   <b style={{ color: '#ec4899' }}>{idx + 1}:</b> {flowers.find(f => f.id === id)?.name}
                 </div>
               ))}
