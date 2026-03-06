@@ -153,7 +153,7 @@ export default function Lab1App() {
         top: 0,
         zIndex: 100
       }}>
-        <h2 style={{ fontSize: '1.2rem', color: '#1f2937', margin: 0, fontWeight: '700' }}>ЛР1 • ІОД</h2>
+        <h2 style={{ fontSize: '1.2rem', color: '#1f2937', margin: 0, fontWeight: '700' }}>ЛР1 • Розподілене введення даних</h2>
         <button
           onClick={() => setView(view === 'results' ? 'vote' : 'login')}
           style={{
