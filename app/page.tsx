@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, push, onValue } from "firebase/database";
 
-// Конфігурація Firebase (вже інтегрована)
 const firebaseConfig = {
   apiKey: "AIzaSyA3scwKpLRt8NG9_n4LHLJGrjP_y0lxNX0",
   authDomain: "iou-lab1.firebaseapp.com",
@@ -15,7 +14,6 @@ const firebaseConfig = {
   measurementId: "G-QXW6RLDGX8"
 };
 
-// Ініціалізація Firebase
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
@@ -58,13 +56,11 @@ export default function Lab1App() {
   const [showPass, setShowPass] = useState(false);
   const [pass, setPass] = useState('');
 
-  // Завантаження даних з Firebase в реальному часі
   useEffect(() => {
     const votesRef = ref(db, 'votes');
     return onValue(votesRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        // Перетворюємо об'єкт Firebase у масив
         const votesList = Object.values(data) as VoteRecord[];
         setVotes(votesList);
       }
@@ -81,31 +77,20 @@ export default function Lab1App() {
   };
 
   const confirmVote = async () => {
-    if (selected.length !== 3) {
-      return alert("Будь ласка, оберіть рівно 3 квіти!");
-    }
-    
-    // Анонімний ID експерта для дотримання конфіденційності [cite: 7]
+    if (selected.length !== 3) return alert("Оберіть 3 квіти!");
     const expertId = `ID-${Math.floor(1000 + Math.random() * 9000)}`;
     const record: VoteRecord = {
       expert: expertId,
       choices: selected.map(id => flowers.find(f => f.id === id)!.name),
       time: new Date().toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })
     };
-
     try {
-      // Збереження в розподілену базу [cite: 10]
       await push(ref(db, 'votes'), record);
       setIsDone(true);
-      alert("Ваш голос враховано анонімно!");
-    } catch (error) {
-      alert("Помилка з'єднання з базою!");
+      alert("Ваш голос враховано!");
+    } catch (e) {
+      alert("Помилка бази даних!");
     }
-  };
-
-  const resetVote = () => {
-    setSelected([]);
-    setIsDone(false);
   };
 
   const medalCounts = flowers.reduce<Record<string, [number, number, number]>>((acc, flower) => {
@@ -124,11 +109,11 @@ export default function Lab1App() {
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #fdfaf7 0%, #fff8f5 100%)',
       color: '#1f2937',
-      paddingBottom: '160px',
+      paddingBottom: '200px', // Збільшено для мобільної панелі
       fontFamily: 'system-ui, -apple-system, sans-serif'
     }}>
       <nav style={{
-        padding: '20px 5%',
+        padding: '15px 5%',
         borderBottom: '1px solid #ffe4e1',
         display: 'flex',
         justifyContent: 'space-between',
@@ -139,51 +124,60 @@ export default function Lab1App() {
         top: 0,
         zIndex: 100
       }}>
-        <h2 style={{ fontSize: '1.2rem', color: '#1f2937', margin: 0, fontWeight: '700' }}>
-          ЛР1 • Розподілене введення даних
-        </h2>
+        <h2 style={{ fontSize: '1rem', color: '#1f2937', margin: 0, fontWeight: '700' }}>ЛР1 • ІОД</h2>
         <button
           onClick={() => setView(view === 'results' ? 'vote' : 'login')}
           style={{
             background: '#ffffff',
             border: '1px solid #ec4899',
             color: '#ec4899',
-            padding: '10px 22px',
-            borderRadius: '12px',
+            padding: '8px 16px',
+            borderRadius: '10px',
             cursor: 'pointer',
-            fontWeight: '600'
+            fontWeight: '600',
+            fontSize: '0.9rem'
           }}
         >
-          {view === 'results' ? '← Повернутися' : '🔑 Адмін'}
+          {view === 'results' ? '← Назад' : '🔑 Адмін'}
         </button>
       </nav>
 
-      <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '50px 20px' }}>
+      <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '30px 15px' }}>
         {view === 'vote' ? (
           <>
-            <h1 style={{ textAlign: 'center', fontSize: '2.2rem', fontWeight: '700', marginBottom: '50px' }}>
-              Оберіть 3 найулюбленіші квітки
+            <h1 style={{ textAlign: 'center', fontSize: '1.8rem', fontWeight: '800', marginBottom: '30px' }}>
+              Оберіть 3 квітки
             </h1>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: '28px' }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+              gap: '15px'
+            }}>
               {flowers.map(f => {
                 const idx = selected.indexOf(f.id);
                 const isSel = idx !== -1;
+                const anySelected = selected.length === 3;
+                
                 return (
                   <div key={f.id} onClick={() => handleSelect(f.id)} style={{
                     background: '#ffffff',
-                    borderRadius: '20px',
+                    borderRadius: '16px',
                     overflow: 'hidden',
                     cursor: isDone ? 'default' : 'pointer',
                     border: isSel ? '3px solid #ec4899' : '1px solid #ffe4e1',
                     position: 'relative',
-                    boxShadow: isSel ? '0 20px 35px rgba(236, 72, 153, 0.18)' : '0 10px 25px rgba(0,0,0,0.07)'
+                    transition: 'all 0.3s ease',
+                    opacity: anySelected && !isSel ? 0.5 : 1, // Ефект затемнення
+                    filter: anySelected && !isSel ? 'grayscale(0.5)' : 'none',
+                    transform: isSel ? 'scale(1.02)' : 'none',
+                    boxShadow: isSel ? '0 10px 20px rgba(236, 72, 153, 0.2)' : '0 4px 12px rgba(0,0,0,0.05)'
                   }}>
-                    <img src={f.img} alt={f.name} style={{ width: '100%', height: '210px', objectFit: 'cover' }} />
-                    <div style={{ padding: '16px 12px', textAlign: 'center', fontWeight: '600' }}>{f.name}</div>
+                    <img src={f.img} alt={f.name} style={{ width: '100%', height: '160px', objectFit: 'cover' }} />
+                    <div style={{ padding: '12px', textAlign: 'center', fontWeight: '600', fontSize: '0.9rem' }}>{f.name}</div>
                     {isSel && (
                       <div style={{
-                        position: 'absolute', top: '14px', left: '14px', background: '#ec4899',
-                        color: 'white', padding: '6px 14px', borderRadius: '9999px', fontWeight: '700'
+                        position: 'absolute', top: '10px', left: '10px', background: '#ec4899',
+                        color: 'white', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '700'
                       }}>
                         {MEDALS[idx]}
                       </div>
@@ -194,30 +188,36 @@ export default function Lab1App() {
             </div>
           </>
         ) : view === 'login' ? (
-          <div style={{ maxWidth: '420px', margin: '120px auto', background: '#ffffff', padding: '50px 40px', borderRadius: '20px', textAlign: 'center', boxShadow: '0 20px 40px rgba(0,0,0,0.08)' }}>
-            <h2 style={{ marginBottom: '30px' }}>Вхід для Адміна</h2>
+          <div style={{ maxWidth: '350px', margin: '80px auto', background: '#ffffff', padding: '40px 30px', borderRadius: '20px', textAlign: 'center', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
+            <h2 style={{ marginBottom: '25px', fontSize: '1.5rem' }}>Вхід</h2>
             <input
               type={showPass ? "text" : "password"}
-              placeholder="Введіть пароль"
+              placeholder="Пароль"
               value={pass}
               onChange={e => setPass(e.target.value)}
-              style={{ width: '100%', padding: '16px', borderRadius: '14px', border: '2px solid #ffe4e1', marginBottom: '20px' }}
+              style={{ width: '100%', padding: '14px', borderRadius: '12px', border: '2px solid #ffe4e1', marginBottom: '15px', outline: 'none' }}
             />
             <button
               onClick={() => pass === 'lr1_2026' ? setView('results') : alert('Невірний пароль!')}
-              style={{ width: '100%', background: '#ec4899', color: 'white', border: 'none', padding: '16px', borderRadius: '14px', fontWeight: '700', cursor: 'pointer' }}
+              style={{ width: '100%', background: '#ec4899', color: 'white', border: 'none', padding: '14px', borderRadius: '12px', fontWeight: '700', cursor: 'pointer' }}
             >
-              УВІЙТИ В ПРОТОКОЛ
+              УВІЙТИ
             </button>
           </div>
         ) : (
-          <div style={{ background: '#ffffff', padding: '40px', borderRadius: '20px', boxShadow: '0 20px 40px rgba(0,0,0,0.08)' }}>
-            <h2 style={{ borderBottom: '2px solid #ffe4e1', paddingBottom: '20px' }}>📋 Протокол (Розподілена база)</h2>
+          /* ПОВЕРНЕНЕ ОФОРМЛЕННЯ АДМІН-ПАНЕЛІ */
+          <div style={{ background: '#ffffff', padding: '25px', borderRadius: '20px', border: '1px solid #ffe4e1', boxShadow: '0 20px 40px rgba(0,0,0,0.08)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', borderBottom: '2px solid #ffe4e1', paddingBottom: '15px' }}>
+              <h2 style={{ fontWeight: '700', fontSize: '1.4rem', margin: 0 }}>📋 Протокол голосування</h2>
+              <div style={{ background: '#fdfaf7', padding: '6px 14px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '700' }}>
+                Голосів: <span style={{ color: '#ec4899' }}>{votes.length}</span>
+              </div>
+            </div>
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 12px' }}>
+              <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 8px' }}>
                 <thead>
-                  <tr>
-                    <th style={{ textAlign: 'left', padding: '16px' }}>Квітка</th>
+                  <tr style={{ fontSize: '0.9rem', color: '#6b7280' }}>
+                    <th style={{ textAlign: 'left', padding: '12px 15px' }}>Об'єкт (Квітка)</th>
                     <th>🥇 1-е</th><th>🥈 2-е</th><th>🥉 3-є</th>
                   </tr>
                 </thead>
@@ -226,10 +226,12 @@ export default function Lab1App() {
                     const counts = medalCounts[flower.name] || [0, 0, 0];
                     return (
                       <tr key={flower.id}>
-                        <td style={{ padding: '18px', background: '#fdfaf7', borderRadius: '14px 0 0 14px' }}>{flower.name}</td>
-                        <td style={{ textAlign: 'center', color: '#ec4899', fontWeight: '700' }}>{counts[0]}</td>
-                        <td style={{ textAlign: 'center', color: '#ec4899', fontWeight: '700' }}>{counts[1]}</td>
-                        <td style={{ textAlign: 'center', color: '#ec4899', fontWeight: '700', borderRadius: '0 14px 14px 0' }}>{counts[2]}</td>
+                        <td style={{ padding: '14px 15px', background: '#fdfaf7', borderRadius: '12px 0 0 12px', border: '1px solid #ffe4e1', fontWeight: '600' }}>
+                          {flower.name}
+                        </td>
+                        <td style={{ textAlign: 'center', background: '#fdfaf7', borderTop: '1px solid #ffe4e1', borderBottom: '1px solid #ffe4e1', color: '#ec4899', fontWeight: '700' }}>{counts[0]}</td>
+                        <td style={{ textAlign: 'center', background: '#fdfaf7', borderTop: '1px solid #ffe4e1', borderBottom: '1px solid #ffe4e1', color: '#ec4899', fontWeight: '700' }}>{counts[1]}</td>
+                        <td style={{ textAlign: 'center', background: '#fdfaf7', borderRadius: '0 12px 12px 0', border: '1px solid #ffe4e1', color: '#ec4899', fontWeight: '700' }}>{counts[2]}</td>
                       </tr>
                     );
                   })}
@@ -240,19 +242,88 @@ export default function Lab1App() {
         )}
       </main>
 
+      {/* ОПТИМІЗОВАНА АДАПТИВНА НИЖНЯ ПАНЕЛЬ */}
       {selected.length > 0 && view === 'vote' && (
-        <div style={{ position: 'fixed', bottom: 0, width: '100%', background: 'rgba(255, 250, 245, 0.98)', padding: '22px', borderTop: '3px solid #ec4899', zIndex: 1000 }}>
-          <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{
+          position: 'fixed',
+          bottom: 0,
+          width: '100%',
+          background: 'rgba(255, 250, 245, 0.98)',
+          backdropFilter: 'blur(20px)',
+          borderTop: '3px solid #ec4899',
+          padding: '15px',
+          zIndex: 1000,
+          boxShadow: '0 -10px 25px rgba(0,0,0,0.1)'
+        }}>
+          <div style={{
+            maxWidth: '1280px',
+            margin: '0 auto',
+            display: 'flex',
+            flexDirection: 'column', // Стовпчик для мобільних
+            gap: '15px',
+            alignItems: 'center'
+          }}>
+            <div style={{ 
+              display: 'flex', 
+              gap: '8px', 
+              justifyContent: 'center',
+              flexWrap: 'wrap' // Перенос значків на новий рядок
+            }}>
               {selected.map((id, idx) => (
-                <span key={id} style={{ background: 'white', padding: '10px', borderRadius: '10px', border: '1px solid #ffe4e1' }}>
+                <div key={id} style={{
+                  background: 'white',
+                  padding: '8px 12px',
+                  borderRadius: '10px',
+                  border: '1px solid #ffe4e1',
+                  fontSize: '0.8rem',
+                  boxShadow: '0 2px 5px rgba(0,0,0,0.05)'
+                }}>
                   <b style={{ color: '#ec4899' }}>{idx + 1}:</b> {flowers.find(f => f.id === id)?.name}
-                </span>
+                </div>
               ))}
             </div>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={resetVote} style={{ background: 'none', border: '2px solid #ec4899', color: '#ec4899', padding: '12px', borderRadius: '12px', cursor: 'pointer' }}>Скинути</button>
-              {!isDone && <button onClick={confirmVote} style={{ background: '#ec4899', color: 'white', border: 'none', padding: '12px 30px', borderRadius: '12px', fontWeight: '700', cursor: 'pointer' }}>ПІДТВЕРДИТИ ✅</button>}
+            
+            <div style={{ 
+              display: 'flex', 
+              gap: '10px', 
+              width: '100%', 
+              justifyContent: 'center' 
+            }}>
+              <button 
+                onClick={() => { setSelected([]); setIsDone(false); }} 
+                style={{ 
+                  flex: 1, 
+                  maxWidth: '120px',
+                  background: 'white', 
+                  border: '2px solid #ec4899', 
+                  color: '#ec4899', 
+                  padding: '12px', 
+                  borderRadius: '12px', 
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                Скинути
+              </button>
+              {!isDone && (
+                <button 
+                  onClick={confirmVote} 
+                  style={{ 
+                    flex: 2,
+                    maxWidth: '240px',
+                    background: 'linear-gradient(to right, #ec4899, #db2777)', 
+                    color: 'white', 
+                    border: 'none', 
+                    padding: '12px', 
+                    borderRadius: '12px', 
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    boxShadow: '0 5px 15px rgba(236, 72, 153, 0.3)'
+                  }}
+                >
+                  ПІДТВЕРДИТИ ✅
+                </button>
+              )}
             </div>
           </div>
         </div>
