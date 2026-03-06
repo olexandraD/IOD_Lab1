@@ -68,7 +68,7 @@ export default function Lab1App() {
     setIsDone(false);
   };
 
-  // Правильна типізація для TypeScript (щоб Vercel не падав)
+  // Правильна типізація для Vercel (щоб не було помилки "implicit any")
   const medalCounts = flowers.reduce<Record<string, [number, number, number]>>((acc, flower) => {
     acc[flower.name] = [0, 0, 0];
     return acc;
@@ -76,9 +76,7 @@ export default function Lab1App() {
 
   votes.forEach(vote => {
     vote.choices.forEach((choice, idx) => {
-      if (medalCounts[choice]) {
-        medalCounts[choice][idx]++;
-      }
+      if (medalCounts[choice]) medalCounts[choice][idx]++;
     });
   });
 
@@ -92,20 +90,20 @@ export default function Lab1App() {
     }}>
       {/* Навігація */}
       <nav style={{
-        padding: '1.5rem 5%',
+        padding: '20px 5%',
         borderBottom: '1px solid #ffe4e1',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         background: 'rgba(255, 250, 245, 0.98)',
-        backdropFilter: 'blur(16px)',
+        backdropFilter: 'blur(20px)',
         position: 'sticky',
         top: 0,
         zIndex: 100
       }}>
         <h2 style={{
-          fontSize: '1.25rem',
-          letterSpacing: '0.5px',
+          fontSize: '1.2rem',
+          letterSpacing: '1px',
           color: '#1f2937',
           margin: 0,
           fontWeight: '700'
@@ -118,11 +116,11 @@ export default function Lab1App() {
             background: '#ffffff',
             border: '1px solid #ec4899',
             color: '#ec4899',
-            padding: '0.65rem 1.5rem',
+            padding: '10px 22px',
             borderRadius: '12px',
             cursor: 'pointer',
             fontWeight: '600',
-            transition: 'all 0.25s ease'
+            transition: 'all 0.2s'
           }}
           onMouseOver={(e) => {
             e.currentTarget.style.background = '#ec4899';
@@ -133,18 +131,18 @@ export default function Lab1App() {
             e.currentTarget.style.color = '#ec4899';
           }}
         >
-          {view === 'results' ? '← Назад' : '🔑 Викладач'}
+          {view === 'results' ? '← Повернутися' : '🔑 Викладач'}
         </button>
       </nav>
 
-      <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '4rem 1.5rem' }}>
+      <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '50px 20px' }}>
         {view === 'vote' ? (
           <>
             <h1 style={{
               textAlign: 'center',
-              fontSize: '2.5rem',
+              fontSize: '2.2rem',
               fontWeight: '700',
-              marginBottom: '3.5rem',
+              marginBottom: '50px',
               color: '#1f2937',
               lineHeight: '1.15'
             }}>
@@ -153,8 +151,8 @@ export default function Lab1App() {
 
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-              gap: '2rem'
+              gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))',
+              gap: '28px'
             }}>
               {flowers.map(f => {
                 const idx = selected.indexOf(f.id);
@@ -165,15 +163,16 @@ export default function Lab1App() {
                     onClick={() => handleSelect(f.id)}
                     style={{
                       background: '#ffffff',
-                      borderRadius: '1.25rem',
+                      borderRadius: '20px',
                       overflow: 'hidden',
                       cursor: isDone ? 'default' : 'pointer',
                       border: isSel ? '3px solid #ec4899' : '1px solid #ffe4e1',
-                      transition: 'all 0.35s ease',
+                      transition: 'all 0.3s ease',
+                      position: 'relative',
                       boxShadow: isSel
-                        ? '0 25px 50px -12px rgba(236, 72, 153, 0.18)'
-                        : '0 10px 30px rgba(0,0,0,0.07)',
-                      transform: isSel ? 'translateY(-8px)' : 'scale(1)'
+                        ? '0 20px 35px rgba(236, 72, 153, 0.18)'
+                        : '0 10px 25px rgba(0,0,0,0.07)',
+                      transform: isSel ? 'translateY(-6px)' : 'none'
                     }}
                   >
                     <img
@@ -181,15 +180,15 @@ export default function Lab1App() {
                       alt={f.name}
                       style={{
                         width: '100%',
-                        height: '230px',
+                        height: '210px',
                         objectFit: 'cover',
-                        transition: 'transform 0.5s ease'
+                        transition: 'transform 0.4s'
                       }}
                     />
                     <div style={{
-                      padding: '1.25rem 1rem',
+                      padding: '16px 12px',
                       textAlign: 'center',
-                      fontSize: '1.05rem',
+                      fontSize: '1rem',
                       fontWeight: '600',
                       color: '#1f2937'
                     }}>
@@ -198,11 +197,11 @@ export default function Lab1App() {
                     {isSel && (
                       <div style={{
                         position: 'absolute',
-                        top: '16px',
-                        left: '16px',
+                        top: '14px',
+                        left: '14px',
                         background: '#ec4899',
                         color: 'white',
-                        padding: '0.45rem 1rem',
+                        padding: '6px 14px',
                         borderRadius: '9999px',
                         fontSize: '0.95rem',
                         fontWeight: '700',
@@ -219,19 +218,19 @@ export default function Lab1App() {
         ) : view === 'login' ? (
           <div style={{
             maxWidth: '420px',
-            margin: '10rem auto',
+            margin: '120px auto',
             background: '#ffffff',
-            padding: '3rem 2.5rem',
-            borderRadius: '1.25rem',
+            padding: '50px 40px',
+            borderRadius: '20px',
             textAlign: 'center',
             border: '1px solid #ffe4e1',
             boxShadow: '0 20px 40px rgba(0,0,0,0.08)'
           }}>
-            <div style={{ fontSize: '3.5rem', marginBottom: '1.5rem' }}>🌸</div>
-            <h2 style={{ marginBottom: '2rem', fontWeight: '700', fontSize: '1.8rem', color: '#1f2937' }}>
+            <div style={{ fontSize: '3rem', marginBottom: '20px' }}>🌸</div>
+            <h2 style={{ marginBottom: '30px', fontWeight: '700', fontSize: '1.75rem', color: '#1f2937' }}>
               Вхід для викладача
             </h2>
-            <div style={{ position: 'relative', marginBottom: '1.8rem' }}>
+            <div style={{ position: 'relative', marginBottom: '25px' }}>
               <input
                 type={showPass ? "text" : "password"}
                 placeholder="Введіть пароль"
@@ -239,20 +238,19 @@ export default function Lab1App() {
                 onChange={e => setPass(e.target.value)}
                 style={{
                   width: '100%',
-                  padding: '1rem 1.25rem',
-                  borderRadius: '12px',
+                  padding: '16px 20px',
+                  borderRadius: '14px',
                   border: '2px solid #ffe4e1',
                   background: '#fdfaf7',
                   color: '#1f2937',
-                  fontSize: '1.05rem',
-                  outline: 'none'
+                  fontSize: '1.05rem'
                 }}
               />
               <button
                 onClick={() => setShowPass(!showPass)}
                 style={{
                   position: 'absolute',
-                  right: '1rem',
+                  right: '16px',
                   top: '50%',
                   transform: 'translateY(-50%)',
                   background: 'none',
@@ -272,12 +270,12 @@ export default function Lab1App() {
                 background: 'linear-gradient(to right, #ec4899, #db2777)',
                 color: 'white',
                 border: 'none',
-                padding: '1rem',
-                borderRadius: '12px',
+                padding: '16px',
+                borderRadius: '14px',
                 fontWeight: '700',
                 fontSize: '1.1rem',
                 cursor: 'pointer',
-                transition: 'all 0.25s'
+                transition: 'all 0.2s'
               }}
             >
               УВІЙТИ В ПРОТОКОЛ
@@ -287,8 +285,8 @@ export default function Lab1App() {
           /* ПРОТОКОЛ */
           <div style={{
             background: '#ffffff',
-            padding: '2.5rem',
-            borderRadius: '1.25rem',
+            padding: '40px',
+            borderRadius: '20px',
             border: '1px solid #ffe4e1',
             boxShadow: '0 20px 40px rgba(0,0,0,0.08)'
           }}>
@@ -296,16 +294,16 @@ export default function Lab1App() {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              marginBottom: '2rem',
+              marginBottom: '30px',
               borderBottom: '2px solid #ffe4e1',
-              paddingBottom: '1.25rem'
+              paddingBottom: '20px'
             }}>
-              <h2 style={{ fontWeight: '700', fontSize: '1.9rem', margin: 0, color: '#1f2937' }}>
+              <h2 style={{ fontWeight: '700', fontSize: '1.85rem', margin: 0, color: '#1f2937' }}>
                 📋 Протокол голосування
               </h2>
               <div style={{
                 background: '#fdfaf7',
-                padding: '0.5rem 1.25rem',
+                padding: '8px 18px',
                 borderRadius: '9999px',
                 fontSize: '0.95rem',
                 fontWeight: '700',
@@ -320,37 +318,37 @@ export default function Lab1App() {
                 width: '100%',
                 borderCollapse: 'separate',
                 borderSpacing: '0 12px',
-                fontSize: '1.05rem'
+                fontSize: '1.02rem'
               }}>
                 <thead>
                   <tr>
                     <th style={{
                       textAlign: 'left',
-                      padding: '1rem 1.5rem',
+                      padding: '16px 24px',
                       background: '#fdfaf7',
-                      borderRadius: '12px 0 0 12px',
+                      borderRadius: '14px 0 0 14px',
                       color: '#1f2937',
                       fontWeight: '700'
                     }}>Квітка</th>
                     <th style={{
                       textAlign: 'center',
-                      padding: '1rem 1.5rem',
+                      padding: '16px 24px',
                       background: '#fdfaf7',
                       color: '#1f2937',
                       fontWeight: '700'
                     }}>🥇 1-е місце</th>
                     <th style={{
                       textAlign: 'center',
-                      padding: '1rem 1.5rem',
+                      padding: '16px 24px',
                       background: '#fdfaf7',
                       color: '#1f2937',
                       fontWeight: '700'
                     }}>🥈 2-е місце</th>
                     <th style={{
                       textAlign: 'center',
-                      padding: '1rem 1.5rem',
+                      padding: '16px 24px',
                       background: '#fdfaf7',
-                      borderRadius: '0 12px 12px 0',
+                      borderRadius: '0 14px 14px 0',
                       color: '#1f2937',
                       fontWeight: '700'
                     }}>🥉 3-є місце</th>
@@ -362,9 +360,9 @@ export default function Lab1App() {
                     return (
                       <tr key={flower.id}>
                         <td style={{
-                          padding: '1.1rem 1.5rem',
+                          padding: '18px 24px',
                           background: '#fdfaf7',
-                          borderRadius: '12px 0 0 12px',
+                          borderRadius: '14px 0 0 14px',
                           border: '1px solid #ffe4e1',
                           fontWeight: '600',
                           color: '#1f2937'
@@ -373,7 +371,7 @@ export default function Lab1App() {
                         </td>
                         <td style={{
                           textAlign: 'center',
-                          padding: '1.1rem 1.5rem',
+                          padding: '18px 24px',
                           background: '#fdfaf7',
                           borderTop: '1px solid #ffe4e1',
                           borderBottom: '1px solid #ffe4e1',
@@ -384,7 +382,7 @@ export default function Lab1App() {
                         </td>
                         <td style={{
                           textAlign: 'center',
-                          padding: '1.1rem 1.5rem',
+                          padding: '18px 24px',
                           background: '#fdfaf7',
                           borderTop: '1px solid #ffe4e1',
                           borderBottom: '1px solid #ffe4e1',
@@ -395,9 +393,9 @@ export default function Lab1App() {
                         </td>
                         <td style={{
                           textAlign: 'center',
-                          padding: '1.1rem 1.5rem',
+                          padding: '18px 24px',
                           background: '#fdfaf7',
-                          borderRadius: '0 12px 12px 0',
+                          borderRadius: '0 14px 14px 0',
                           border: '1px solid #ffe4e1',
                           color: '#ec4899',
                           fontWeight: '700'
@@ -422,9 +420,9 @@ export default function Lab1App() {
           left: 0,
           right: 0,
           background: 'rgba(255, 250, 245, 0.98)',
-          backdropFilter: 'blur(16px)',
+          backdropFilter: 'blur(24px)',
           borderTop: '3px solid #ec4899',
-          padding: '1.4rem 1.5rem',
+          padding: '22px 20px',
           zIndex: 1000
         }}>
           <div style={{
@@ -434,9 +432,9 @@ export default function Lab1App() {
             justifyContent: 'space-between',
             alignItems: 'center',
             flexWrap: 'wrap',
-            gap: '1.25rem'
+            gap: '20px'
           }}>
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
               {selected.map((id, idx) => {
                 const name = flowers.find(f => f.id === id)?.name;
                 return (
@@ -445,12 +443,12 @@ export default function Lab1App() {
                     style={{
                       fontSize: '1rem',
                       background: '#ffffff',
-                      padding: '0.8rem 1.4rem',
-                      borderRadius: '12px',
+                      padding: '12px 20px',
+                      borderRadius: '14px',
                       border: '1px solid #ffe4e1',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.6rem',
+                      gap: '8px',
                       color: '#1f2937',
                       boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
                     }}
@@ -463,18 +461,17 @@ export default function Lab1App() {
                 );
               })}
             </div>
-            <div style={{ display: 'flex', gap: '1rem' }}>
+            <div style={{ display: 'flex', gap: '14px' }}>
               <button
                 onClick={resetVote}
                 style={{
                   background: 'transparent',
                   border: '2px solid #ec4899',
                   color: '#ec4899',
-                  padding: '0.75rem 1.8rem',
-                  borderRadius: '12px',
+                  padding: '12px 26px',
+                  borderRadius: '14px',
                   cursor: 'pointer',
-                  fontWeight: '600',
-                  transition: 'all 0.2s'
+                  fontWeight: '600'
                 }}
               >
                 Скинути
@@ -486,15 +483,14 @@ export default function Lab1App() {
                     background: 'linear-gradient(to right, #ec4899, #db2777)',
                     border: 'none',
                     color: 'white',
-                    padding: '0.75rem 2rem',
-                    borderRadius: '12px',
+                    padding: '12px 36px',
+                    borderRadius: '14px',
                     cursor: 'pointer',
                     fontWeight: '700',
-                    fontSize: '1.05rem',
-                    boxShadow: '0 6px 16px rgba(236, 72, 153, 0.3)'
+                    fontSize: '1.05rem'
                   }}
                 >
-                  Підтвердити вибір
+                  ПІДТВЕРДИТИ ВИБІР ✅
                 </button>
               )}
             </div>
