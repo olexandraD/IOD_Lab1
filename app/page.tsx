@@ -1,17 +1,18 @@
 "use client";
 import React, { useState } from 'react';
+import Image from 'next/image';
 
 const flowers = [
-  { id: 'f1', name: 'Червона Троянда', img: 'https://unsplash.com/photos/red-roses-OsHqxjVV0HE' },
-  { id: 'f2', name: 'Біла Лілія', img: 'https://unsplash.com/photos/white-flowers-_iVuWPrfCZI' },
+  { id: 'f1', name: 'Червона Троянда', img: 'https://picsum.photos/id/1015/300/200' },
+  { id: 'f2', name: 'Біла Лілія', img: 'https://picsum.photos/id/102/300/200' },
   { id: 'f3', name: 'Соняшник', img: 'https://picsum.photos/id/103/300/200' },
   { id: 'f4', name: 'Лаванда', img: 'https://picsum.photos/id/104/300/200' },
-  { id: 'f5', name: 'Орхідея', img: 'https://unsplash.com/photos/purple-moth-orchids-in-bloom-ywEfzLduYB4' },
-  { id: 'f6', name: 'Тюльпан', img: 'https://unsplash.com/photos/red-and-white-tulips-field-during-daytime-vRSqzy-xu7w' },
+  { id: 'f5', name: 'Орхідея', img: 'https://picsum.photos/id/105/300/200' },
+  { id: 'f6', name: 'Тюльпан', img: 'https://picsum.photos/id/106/300/200' },
   { id: 'f7', name: 'Півонія', img: 'https://picsum.photos/id/107/300/200' },
-  { id: 'f8', name: 'Магнолія', img: 'https://unsplash.com/photos/pink-and-white-flowers-during-daytime-5oAJ5KeZxNI' },
-  { id: 'f9', name: 'Сакура', img: 'https://unsplash.com/photos/white-petaled-flower-lFTtQqVfx6g' },
-  { id: 'f10', name: 'Гортензія', img: 'https://unsplash.com/photos/green-leafed-plant-with-purple-flowers-_SAVhxRL2U8' },
+  { id: 'f8', name: 'Магнолія', img: 'https://picsum.photos/id/108/300/200' },
+  { id: 'f9', name: 'Сакура', img: 'https://picsum.photos/id/109/300/200' },
+  { id: 'f10', name: 'Гортензія', img: 'https://picsum.photos/id/110/300/200' },
   { id: 'f11', name: 'Ірис', img: 'https://picsum.photos/id/111/300/200' },
   { id: 'f12', name: 'Лотос', img: 'https://picsum.photos/id/112/300/200' },
   { id: 'f13', name: 'Гібіскус', img: 'https://picsum.photos/id/113/300/200' },
@@ -178,17 +179,16 @@ export default function Lab1App() {
                       opacity: isDone && !isSel ? 0.45 : 1
                     }}
                   >
-                    <img
+                    <Image
                       src={f.img}
                       alt={f.name}
+                      width={300}
+                      height={200}
                       style={{
                         width: '100%',
                         height: '190px',
                         objectFit: 'cover',
                         transition: 'transform 0.4s'
-                      }}
-                      onError={(e) => {
-                        e.currentTarget.src = 'https://picsum.photos/id/1005/300/200';
                       }}
                     />
                     <div style={{
@@ -336,7 +336,7 @@ export default function Lab1App() {
                       borderRadius: '12px 0 0 12px',
                       color: '#f472b6',
                       fontWeight: '900'
-                    }}>Квітка / Об'єкт</th>
+                    }}>Квітка / Об&apos;єкт</th>
                     <th style={{
                       textAlign: 'center',
                       padding: '16px 24px',
