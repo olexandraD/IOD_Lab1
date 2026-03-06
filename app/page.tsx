@@ -87,9 +87,10 @@ export default function Lab1App() {
     try {
       await push(ref(db, 'votes'), record);
       setIsDone(true);
-      alert("Ваш голос враховано!");
-    } catch (e) {
-      alert("Помилка бази даних!");
+      alert("Ваш голос враховано анонімно!"); [cite: 7]
+    } catch (err) {
+      console.error(err);
+      alert("Помилка з&apos;єднання з базою!");
     }
   };
 
@@ -109,7 +110,7 @@ export default function Lab1App() {
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #fdfaf7 0%, #fff8f5 100%)',
       color: '#1f2937',
-      paddingBottom: '200px', // Збільшено для мобільної панелі
+      paddingBottom: '200px',
       fontFamily: 'system-ui, -apple-system, sans-serif'
     }}>
       <nav style={{
@@ -167,11 +168,12 @@ export default function Lab1App() {
                     border: isSel ? '3px solid #ec4899' : '1px solid #ffe4e1',
                     position: 'relative',
                     transition: 'all 0.3s ease',
-                    opacity: anySelected && !isSel ? 0.5 : 1, // Ефект затемнення
+                    opacity: anySelected && !isSel ? 0.5 : 1,
                     filter: anySelected && !isSel ? 'grayscale(0.5)' : 'none',
                     transform: isSel ? 'scale(1.02)' : 'none',
                     boxShadow: isSel ? '0 10px 20px rgba(236, 72, 153, 0.2)' : '0 4px 12px rgba(0,0,0,0.05)'
                   }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={f.img} alt={f.name} style={{ width: '100%', height: '160px', objectFit: 'cover' }} />
                     <div style={{ padding: '12px', textAlign: 'center', fontWeight: '600', fontSize: '0.9rem' }}>{f.name}</div>
                     {isSel && (
@@ -190,13 +192,22 @@ export default function Lab1App() {
         ) : view === 'login' ? (
           <div style={{ maxWidth: '350px', margin: '80px auto', background: '#ffffff', padding: '40px 30px', borderRadius: '20px', textAlign: 'center', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
             <h2 style={{ marginBottom: '25px', fontSize: '1.5rem' }}>Вхід</h2>
-            <input
-              type={showPass ? "text" : "password"}
-              placeholder="Пароль"
-              value={pass}
-              onChange={e => setPass(e.target.value)}
-              style={{ width: '100%', padding: '14px', borderRadius: '12px', border: '2px solid #ffe4e1', marginBottom: '15px', outline: 'none' }}
-            />
+            <div style={{ position: 'relative', marginBottom: '15px' }}>
+              <input
+                type={showPass ? "text" : "password"}
+                placeholder="Пароль"
+                value={pass}
+                onChange={e => setPass(e.target.value)}
+                style={{ width: '100%', padding: '14px', borderRadius: '12px', border: '2px solid #ffe4e1', outline: 'none' }}
+              />
+              <button 
+                type="button"
+                onClick={() => setShowPass(!showPass)}
+                style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer' }}
+              >
+                {showPass ? '🔒' : '👁️'}
+              </button>
+            </div>
             <button
               onClick={() => pass === 'lr1_2026' ? setView('results') : alert('Невірний пароль!')}
               style={{ width: '100%', background: '#ec4899', color: 'white', border: 'none', padding: '14px', borderRadius: '12px', fontWeight: '700', cursor: 'pointer' }}
@@ -205,10 +216,9 @@ export default function Lab1App() {
             </button>
           </div>
         ) : (
-          /* ПОВЕРНЕНЕ ОФОРМЛЕННЯ АДМІН-ПАНЕЛІ */
           <div style={{ background: '#ffffff', padding: '25px', borderRadius: '20px', border: '1px solid #ffe4e1', boxShadow: '0 20px 40px rgba(0,0,0,0.08)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', borderBottom: '2px solid #ffe4e1', paddingBottom: '15px' }}>
-              <h2 style={{ fontWeight: '700', fontSize: '1.4rem', margin: 0 }}>📋 Протокол голосування</h2>
+              <h2 style={{ fontWeight: '700', fontSize: '1.4rem', margin: 0 }}>📋 Протокол голосування</h2> [cite: 68]
               <div style={{ background: '#fdfaf7', padding: '6px 14px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '700' }}>
                 Голосів: <span style={{ color: '#ec4899' }}>{votes.length}</span>
               </div>
@@ -217,7 +227,7 @@ export default function Lab1App() {
               <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 8px' }}>
                 <thead>
                   <tr style={{ fontSize: '0.9rem', color: '#6b7280' }}>
-                    <th style={{ textAlign: 'left', padding: '12px 15px' }}>Об'єкт (Квітка)</th>
+                    <th style={{ textAlign: 'left', padding: '12px 15px' }}>Об&apos;єкт (Квітка)</th>
                     <th>🥇 1-е</th><th>🥈 2-е</th><th>🥉 3-є</th>
                   </tr>
                 </thead>
@@ -242,87 +252,33 @@ export default function Lab1App() {
         )}
       </main>
 
-      {/* ОПТИМІЗОВАНА АДАПТИВНА НИЖНЯ ПАНЕЛЬ */}
       {selected.length > 0 && view === 'vote' && (
         <div style={{
-          position: 'fixed',
-          bottom: 0,
-          width: '100%',
-          background: 'rgba(255, 250, 245, 0.98)',
-          backdropFilter: 'blur(20px)',
-          borderTop: '3px solid #ec4899',
-          padding: '15px',
-          zIndex: 1000,
-          boxShadow: '0 -10px 25px rgba(0,0,0,0.1)'
+          position: 'fixed', bottom: 0, width: '100%', background: 'rgba(255, 250, 245, 0.98)',
+          backdropFilter: 'blur(20px)', borderTop: '3px solid #ec4899', padding: '15px', zIndex: 1000, boxShadow: '0 -10px 25px rgba(0,0,0,0.1)'
         }}>
-          <div style={{
-            maxWidth: '1280px',
-            margin: '0 auto',
-            display: 'flex',
-            flexDirection: 'column', // Стовпчик для мобільних
-            gap: '15px',
-            alignItems: 'center'
-          }}>
-            <div style={{ 
-              display: 'flex', 
-              gap: '8px', 
-              justifyContent: 'center',
-              flexWrap: 'wrap' // Перенос значків на новий рядок
-            }}>
+          <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
               {selected.map((id, idx) => (
-                <div key={id} style={{
-                  background: 'white',
-                  padding: '8px 12px',
-                  borderRadius: '10px',
-                  border: '1px solid #ffe4e1',
-                  fontSize: '0.8rem',
-                  boxShadow: '0 2px 5px rgba(0,0,0,0.05)'
-                }}>
+                <div key={id} style={{ background: 'white', padding: '8px 12px', borderRadius: '10px', border: '1px solid #ffe4e1', fontSize: '0.8rem' }}>
                   <b style={{ color: '#ec4899' }}>{idx + 1}:</b> {flowers.find(f => f.id === id)?.name}
                 </div>
               ))}
             </div>
-            
-            <div style={{ 
-              display: 'flex', 
-              gap: '10px', 
-              width: '100%', 
-              justifyContent: 'center' 
-            }}>
+            <div style={{ display: 'flex', gap: '10px', width: '100%', justifyContent: 'center' }}>
               <button 
                 onClick={() => { setSelected([]); setIsDone(false); }} 
-                style={{ 
-                  flex: 1, 
-                  maxWidth: '120px',
-                  background: 'white', 
-                  border: '2px solid #ec4899', 
-                  color: '#ec4899', 
-                  padding: '12px', 
-                  borderRadius: '12px', 
-                  fontWeight: '600',
-                  cursor: 'pointer'
-                }}
+                style={{ flex: 1, maxWidth: '120px', background: 'white', border: '2px solid #ec4899', color: '#ec4899', padding: '12px', borderRadius: '12px', fontWeight: '600', cursor: 'pointer' }}
               >
                 Скинути
               </button>
               {!isDone && (
                 <button 
                   onClick={confirmVote} 
-                  style={{ 
-                    flex: 2,
-                    maxWidth: '240px',
-                    background: 'linear-gradient(to right, #ec4899, #db2777)', 
-                    color: 'white', 
-                    border: 'none', 
-                    padding: '12px', 
-                    borderRadius: '12px', 
-                    fontWeight: '700',
-                    cursor: 'pointer',
-                    boxShadow: '0 5px 15px rgba(236, 72, 153, 0.3)'
-                  }}
+                  style={{ flex: 2, maxWidth: '240px', background: 'linear-gradient(to right, #ec4899, #db2777)', color: 'white', border: 'none', padding: '12px', borderRadius: '12px', fontWeight: '700', cursor: 'pointer' }}
                 >
                   ПІДТВЕРДИТИ ✅
-                </button>
+                </button> [cite: 5]
               )}
             </div>
           </div>
