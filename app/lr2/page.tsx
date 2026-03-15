@@ -1,4 +1,3 @@
-// app/lr2/page.tsx  (ЛР2)
 "use client";
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
@@ -131,7 +130,6 @@ export default function Lab2Page() {
     setView('algo');
   };
 
-  // ══════════════════════════════════════════════════════════════════════
   return (
     <div style={labStyles.mainContainer}>
 
@@ -153,7 +151,6 @@ export default function Lab2Page() {
 
       <main style={labStyles.main}>
 
-        {/* ════ VOTE ════ */}
         {view === 'vote' && (
           <>
             {!voteSent ? (
@@ -192,7 +189,6 @@ export default function Lab2Page() {
                 </div>
               </>
             ) : (
-              /* ── РЕЗУЛЬТАТ ПІСЛЯ ГОЛОСУВАННЯ (компактний) ── */
               <div style={labStyles.card}>
                 {/* Шапка */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' as const }}>
@@ -219,7 +215,6 @@ export default function Lab2Page() {
                   </button>
                 </div>
 
-                {/* Лічильники — компактний рядок */}
                 <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', flexWrap: 'wrap' as const }}>
                   {[
                     { emoji: '🌸', value: subset.length,      label: 'Підмножина',  color: '#ec4899', bg: '#fff0f7' },
@@ -445,7 +440,6 @@ export default function Lab2Page() {
           </>
         )}
 
-        {/* ════ LOGIN ════ */}
         {view === 'login' && (
           <div style={labStyles.loginBox}>
             <div style={labStyles.loginEmoji}>🔐</div>
@@ -467,7 +461,6 @@ export default function Lab2Page() {
           </div>
         )}
 
-        {/* ════ ADMIN ════ */}
         {view === 'admin' && (
           <>
             <h1 style={labStyles.voteTitle}>🔐 Адмін-панель ЛР2</h1>
@@ -579,7 +572,6 @@ export default function Lab2Page() {
           </>
         )}
 
-        {/* ════ ALGO ════ */}
         {view === 'algo' && (
           <>
             <h1 style={labStyles.voteTitle}>🧬 Генетичний Алгоритм — Фінальне ранжування</h1>
@@ -620,7 +612,7 @@ export default function Lab2Page() {
                   <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '12px', padding: '16px 20px' }}>
                     <b style={{ color: '#166534' }}>✅ Фінальна підмножина сформована!</b>
                     <p style={{ color: '#166534', marginTop: '6px', marginBottom: 0, fontSize: '0.9rem' }}>
-                      ГА відібрав {gaResult.length} найкращих об&apos;єктів. Підмножина готова до прямого перебору.
+                      ГА відібрав {gaResult.length} найкращих об&apos;єктів.
                     </p>
                   </div>
                 </>
