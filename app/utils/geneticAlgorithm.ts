@@ -2,43 +2,13 @@
 
 export interface FlowerScore {
   name: string;
-  gold: number;   // скільки разів на 1-му місці
-  silver: number; // скільки разів на 2-му місці
-  bronze: number; // скільки разів на 3-му місці
-  total: number;  // 3*gold + 2*silver + 1*bronze
+  gold: number;   
+  silver: number; 
+  bronze: number; 
+  total: number;  
 }
 
-// ── Як правильно читати евристики методички ───────────────────────────────
-//
-// Евристики описують МАКСИМАЛЬНО СЛАБКУ підтримку, при якій квітку
-// ще можна видалити БЕЗ суттєвого впливу на результат.
-//
-// "Участь в одному МП на 3-му місці" = квітка має підтримку
-// НЕ БІЛЬШЕ ніж одна бронза і нічого сильнішого.
-// → Видаляємо: gold=0, silver=0, bronze ≤ 1
-//
-// "Участь в 2х МП на 3-му місці" = квітка має підтримку
-// НЕ БІЛЬШЕ ніж дві бронзи і нічого сильнішого.
-// → Видаляємо: gold=0, silver=0, bronze ≤ 2
-// (це ШИРША евристика — включає всіх кого Е1 видаляє, плюс тих хто має 2 бронзи)
-//
-// "Участь в одному МП на 2-му місці" = НЕ БІЛЬШЕ одного срібла, без золота.
-// → Видаляємо: gold=0, silver ≤ 1, bronze = 0
-//
-// "Участь в одному МП на 1-му місці" = НЕ БІЛЬШЕ одного золота, без підтримки взагалі.
-// → Видаляємо: gold ≤ 1, silver = 0, bronze = 0
-// (поодинока перемога без будь-якої іншої підтримки)
-//
-// "Одне 3-є + одне 2-є" = НЕ БІЛЬШЕ ніж 1 срібло + 1 бронза, без золота.
-// → Видаляємо: gold=0, silver ≤ 1, bronze ≤ 1, silver+bronze > 0
-//
-// Е6 (власна): зважений бал < середнього по підмножині
-// → потребує контексту
-//
-// Е7 (власна): жодного золота І загальна кількість голосів ≤ 2
-// → gold=0, gold+silver+bronze ≤ 2
-
-export const HEURISTIC_RULES: Record<string, (f: FlowerScore, ctx?: { mean: number }) => boolean> = {
+export const HEURISTIC_RULES: Record<string, (f: FlowerScore) => boolean> = {
   // Е1: не більше 1 бронзи, нуль золота і срібла
   e1: (f) => f.gold === 0 && f.silver === 0 && f.bronze <= 1,
 
@@ -54,8 +24,7 @@ export const HEURISTIC_RULES: Record<string, (f: FlowerScore, ctx?: { mean: numb
   // Е5: не більше 1 срібла + 1 бронзи, нуль золота, хоч щось є
   e5: (f) => f.gold === 0 && f.silver <= 1 && f.bronze <= 1 && (f.silver + f.bronze) > 0,
 
-  // Е6: зважений бал нижче середнього (потребує контексту)
-  e6: (f, ctx) => ctx !== undefined && f.total < ctx.mean,
+  e6: (f) => (f.gold + f.silver + f.bronze) < 3,
 
   // Е7: жодного золота і мало голосів загалом
   e7: (f) => f.gold === 0 && (f.gold + f.silver + f.bronze) <= 2,
@@ -67,11 +36,10 @@ export const HEURISTIC_EXPLANATIONS: Record<string, string> = {
   e3: 'Видаляємо квітки з не більше 1 золотом і нуль срібла/бронзи — поодинока перемога без підтримки.',
   e4: 'Видаляємо квітки з не більше 2 бронзами і нуль золота/срібла. Включає всіх кого Е1 видаляє.',
   e5: 'Видаляємо квітки без золота, з не більше 1 сріблом і 1 бронзою — слабка участь без першості.',
-  e6: 'Видаляємо квітки, чий зважений бал нижче середнього по підмножині.',
+  e6: 'Видаляємо квітки, де сумарна кількість голосів усіх місць менша за 3 (gold+silver+bronze < 3).',
   e7: 'Видаляємо квітки без жодного золота і з не більше 2 голосами загалом.',
 };
 
-// ── Застосування однієї евристики ─────────────────────────────────────────
 export function applyHeuristic(
   scores: FlowerScore[],
   heurId: string
@@ -79,18 +47,11 @@ export function applyHeuristic(
   const rule = HEURISTIC_RULES[heurId];
   if (!rule) return { kept: scores, removed: [] };
 
-  let ctx: { mean: number } | undefined;
-  if (heurId === 'e6') {
-    const mean = scores.reduce((s, f) => s + f.total, 0) / (scores.length || 1);
-    ctx = { mean };
-  }
-
-  const kept = scores.filter(f => !rule(f, ctx));
-  const removed = scores.filter(f => rule(f, ctx));
+  const kept = scores.filter(f => !rule(f));
+  const removed = scores.filter(f => rule(f));
   return { kept, removed };
 }
 
-// ── Послідовне застосування ────────────────────────────────────────────────
 export function applyHeuristicsSequentially(
   scores: FlowerScore[],
   heurIds: string[]
@@ -105,7 +66,7 @@ export function applyHeuristicsSequentially(
   return steps;
 }
 
-// ── Генетичний алгоритм ────────────────────────────────────────────────────
+// ── Генетичний алгоритм ──────
 type Individual = number[];
 
 const fitness = (ind: Individual, c: FlowerScore[]) => ind.reduce((s, i) => s + c[i].total, 0);
