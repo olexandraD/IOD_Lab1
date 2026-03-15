@@ -1,6 +1,7 @@
 // app/lr2/page.tsx  (ЛР2)
 "use client";
 import React, { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import { initializeApp, getApps } from "firebase/app";
 import { getDatabase, ref, push, onValue, set } from "firebase/database";
 
@@ -22,6 +23,10 @@ interface HeuristicVote {
   time: string;
 }
 
+interface VoteRecord {
+  choices: string[];
+}
+
 function getSubset(scores: FlowerScore[]): FlowerScore[] {
   const withVotes = scores.filter(f => f.total > 0);
   const capped = withVotes.slice(0, 19);
@@ -32,7 +37,7 @@ export default function Lab2Page() {
   const [expertName, setExpertName] = useState('');
   const [selectedHeur, setSelectedHeur] = useState<string[]>([]);
   const [heurVotes, setHeurVotes] = useState<HeuristicVote[]>([]);
-  const [lr1Votes, setLr1Votes] = useState<any[]>([]);
+  const [lr1Votes, setLr1Votes] = useState<VoteRecord[]>([]);
   const [view, setView] = useState<'vote' | 'protocol' | 'login' | 'admin' | 'algo'>('vote');
   const [showPass, setShowPass] = useState(false);
   const [pass, setPass] = useState('');
@@ -46,7 +51,7 @@ export default function Lab2Page() {
       setHeurVotes(snap.val() ? Object.values(snap.val()) as HeuristicVote[] : []);
     });
     onValue(ref(db, 'votes'), (snap) => {
-      setLr1Votes(snap.val() ? Object.values(snap.val()) as any[] : []);
+      setLr1Votes(snap.val() ? Object.values(snap.val()) as VoteRecord[] : []);
     });
   }, []);
 
@@ -134,7 +139,7 @@ export default function Lab2Page() {
       <nav style={labStyles.nav}>
         <h2 style={labStyles.navTitle}>ЛР2 • Евристичне обґрунтування звуження</h2>
         <div style={labStyles.navLinks}>
-          <a href="/" style={labStyles.navBtn(false)}>ЛР1</a>
+          <Link href="/" style={labStyles.navBtn(false)}>ЛР1</Link>
           <button onClick={() => { setView('vote'); setVoteSent(false); }}
             style={labStyles.navBtn(view === 'vote')}>📝 Голосування</button>
           <button onClick={() => setView('protocol')}
@@ -164,7 +169,7 @@ export default function Lab2Page() {
                 </div>
 
                 <div style={labStyles.card}>
-                  <div style={labStyles.sectionTitle}>🎯 Оберіть 2–3 евристики для відсіювання об'єктів</div>
+                  <div style={labStyles.sectionTitle}>🎯 Оберіть 2–3 евристики для відсіювання об&apos;єктів</div>
                   <p style={{ color: '#6b7280', marginBottom: '20px', fontSize: '0.9rem' }}>
                     Вибрано: <b style={labStyles.accentText}>{selectedHeur.length}</b> / 3
                   </p>
@@ -615,7 +620,7 @@ export default function Lab2Page() {
                   <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '12px', padding: '16px 20px' }}>
                     <b style={{ color: '#166534' }}>✅ Фінальна підмножина сформована!</b>
                     <p style={{ color: '#166534', marginTop: '6px', marginBottom: 0, fontSize: '0.9rem' }}>
-                      ГА відібрав {gaResult.length} найкращих об'єктів. Підмножина готова до прямого перебору.
+                      ГА відібрав {gaResult.length} найкращих об&apos;єктів. Підмножина готова до прямого перебору.
                     </p>
                   </div>
                 </>
