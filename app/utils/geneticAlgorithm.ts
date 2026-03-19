@@ -1,32 +1,18 @@
-// app/utils/geneticAlgorithm.ts
-
 export interface FlowerScore {
   name: string;
-  gold: number;   
-  silver: number; 
-  bronze: number; 
-  total: number;  
+  gold: number;
+  silver: number;
+  bronze: number;
+  total: number;
 }
 
 export const HEURISTIC_RULES: Record<string, (f: FlowerScore) => boolean> = {
-  // Е1: не більше 1 бронзи, нуль золота і срібла
   e1: (f) => f.gold === 0 && f.silver === 0 && f.bronze <= 1,
-
-  // Е2: не більше 1 срібла, нуль золота і бронзи
   e2: (f) => f.gold === 0 && f.silver <= 1 && f.bronze === 0,
-
-  // Е3: не більше 1 золота, нуль срібла і бронзи (поодинока перемога)
   e3: (f) => f.gold <= 1 && f.silver === 0 && f.bronze === 0,
-
-  // Е4: не більше 2 бронз, нуль золота і срібла (включає Е1)
   e4: (f) => f.gold === 0 && f.silver === 0 && f.bronze <= 2,
-
-  // Е5: не більше 1 срібла + 1 бронзи, нуль золота, хоч щось є
   e5: (f) => f.gold === 0 && f.silver <= 1 && f.bronze <= 1 && (f.silver + f.bronze) > 0,
-
   e6: (f) => (f.gold + f.silver + f.bronze) < 3,
-
-  // Е7: жодного золота і мало голосів загалом
   e7: (f) => f.gold === 0 && (f.gold + f.silver + f.bronze) <= 2,
 };
 
@@ -46,7 +32,6 @@ export function applyHeuristic(
 ): { kept: FlowerScore[]; removed: FlowerScore[] } {
   const rule = HEURISTIC_RULES[heurId];
   if (!rule) return { kept: scores, removed: [] };
-
   const kept = scores.filter(f => !rule(f));
   const removed = scores.filter(f => rule(f));
   return { kept, removed };
@@ -97,14 +82,12 @@ const mutate = (ind: Individual, total: number, rate: number): Individual => {
 
 export function runGeneticAlgorithm(
   candidates: FlowerScore[],
-  targetSize = 5,
+  targetSize = 10,                    // ← ЗМІНЕНО НА 10 (було 5)
   opts = { popSize: 30, generations: 100, mutationRate: 0.1, eliteCount: 6 }
 ): FlowerScore[] {
   if (candidates.length <= targetSize) return [...candidates].sort((a, b) => b.total - a.total);
   const { popSize, generations, mutationRate, eliteCount } = opts;
-
   let pop: Individual[] = Array.from({ length: popSize }, () => randomInd(candidates.length, targetSize));
-
   for (let g = 0; g < generations; g++) {
     pop.sort((a, b) => fitness(b, candidates) - fitness(a, candidates));
     const elite = pop.slice(0, eliteCount);
@@ -116,6 +99,13 @@ export function runGeneticAlgorithm(
     }
     pop = [...elite, ...children];
   }
-
   return pop[0].map(i => candidates[i]).sort((a, b) => b.total - a.total);
+}
+
+// НОВА ФУНКЦІЯ — автоматично обрізає до 10 (якщо після евристик залишилось більше)
+export function capToMaxSize(scores: FlowerScore[], maxSize = 10): FlowerScore[] {
+  if (scores.length <= maxSize) return scores;
+  return [...scores]
+    .sort((a, b) => b.total - a.total)
+    .slice(0, maxSize);
 }
