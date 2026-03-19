@@ -7,23 +7,36 @@ export interface FlowerScore {
 }
 
 export const HEURISTIC_RULES: Record<string, (f: FlowerScore) => boolean> = {
-  e1: (f) => f.gold === 0 && f.silver === 0 && f.bronze <= 1,
-  e2: (f) => f.gold === 0 && f.silver <= 1 && f.bronze === 0,
-  e3: (f) => f.gold <= 1 && f.silver === 0 && f.bronze === 0,
-  e4: (f) => f.gold === 0 && f.silver === 0 && f.bronze <= 2,
-  e5: (f) => f.gold === 0 && f.silver <= 1 && f.bronze <= 1 && (f.silver + f.bronze) > 0,
+  // E1: участь рівно в 1 порівнянні на 3 місці (методичка)
+  e1: (f) => f.gold === 0 && f.silver === 0 && f.bronze === 1,
+
+  // E2: участь рівно в 1 порівнянні на 2 місці (методичка)
+  e2: (f) => f.gold === 0 && f.silver === 1 && f.bronze === 0,
+
+  // E3: участь рівно в 1 порівнянні на 1 місці (методичка)
+  e3: (f) => f.gold === 1 && f.silver === 0 && f.bronze === 0,
+
+  // E4: участь рівно в 2 порівняннях на 3 місці (методичка)
+  e4: (f) => f.gold === 0 && f.silver === 0 && f.bronze === 2,
+
+  // E5: рівно 1 раз на 3 місці + рівно 1 раз на 2 місці (методичка)
+  e5: (f) => f.gold === 0 && f.silver === 1 && f.bronze === 1,
+
+  // E6: менше 3 голосів загалом — власна
   e6: (f) => (f.gold + f.silver + f.bronze) < 3,
+
+  // E7: без золота і не більше 2 голосів загалом — власна
   e7: (f) => f.gold === 0 && (f.gold + f.silver + f.bronze) <= 2,
 };
 
 export const HEURISTIC_EXPLANATIONS: Record<string, string> = {
-  e1: 'Видаляємо квітки з не більше 1 бронзою і нуль золота/срібла — найслабша можлива участь.',
-  e2: 'Видаляємо квітки з не більше 1 сріблом і нуль золота/бронзи.',
-  e3: 'Видаляємо квітки з не більше 1 золотом і нуль срібла/бронзи — поодинока перемога без підтримки.',
-  e4: 'Видаляємо квітки з не більше 2 бронзами і нуль золота/срібла. Включає всіх кого Е1 видаляє.',
-  e5: 'Видаляємо квітки без золота, з не більше 1 сріблом і 1 бронзою — слабка участь без першості.',
-  e6: 'Видаляємо квітки, де сумарна кількість голосів усіх місць менша за 3 (gold+silver+bronze < 3).',
-  e7: 'Видаляємо квітки без жодного золота і з не більше 2 голосами загалом.',
+  e1: 'Видаляємо квітки з участю рівно 1 раз на 3 місці (bronze=1, gold=0, silver=0).',
+  e2: 'Видаляємо квітки з участю рівно 1 раз на 2 місці (silver=1, gold=0, bronze=0).',
+  e3: 'Видаляємо квітки з участю рівно 1 раз на 1 місці (gold=1, silver=0, bronze=0).',
+  e4: 'Видаляємо квітки з участю рівно 2 рази на 3 місці (bronze=2, gold=0, silver=0).',
+  e5: 'Видаляємо квітки з участю 1 раз на 3 місці і 1 раз на 2 місці (gold=0, silver=1, bronze=1).',
+  e6: 'Видаляємо квітки з менш ніж 3 голосами загалом (власна).',
+  e7: 'Видаляємо квітки без золота і не більше 2 голосів загалом (власна).',
 };
 
 export function applyHeuristic(
@@ -43,11 +56,24 @@ export function applyHeuristicsSequentially(
 ): { step: number; heurId: string; result: FlowerScore[]; removedCount: number }[] {
   const steps: { step: number; heurId: string; result: FlowerScore[]; removedCount: number }[] = [];
   let current = [...scores];
-  heurIds.forEach((heurId, i) => {
+
+  for (let i = 0; i < heurIds.length; i++) {
+    // Ціль досягнута — зупиняємось
+    if (current.length <= 10) break;
+
+    const heurId = heurIds[i];
     const { kept, removed } = applyHeuristic(current, heurId);
+
+    // Не застосовуємо якщо видалить усіх
+    if (kept.length === 0) {
+      steps.push({ step: i + 1, heurId, result: [...current], removedCount: 0 });
+      continue;
+    }
+
     current = kept;
     steps.push({ step: i + 1, heurId, result: [...current], removedCount: removed.length });
-  });
+  }
+
   return steps;
 }
 
@@ -82,7 +108,7 @@ const mutate = (ind: Individual, total: number, rate: number): Individual => {
 
 export function runGeneticAlgorithm(
   candidates: FlowerScore[],
-  targetSize = 10,                    // ← ЗМІНЕНО НА 10 (було 5)
+  targetSize = 10,
   opts = { popSize: 30, generations: 100, mutationRate: 0.1, eliteCount: 6 }
 ): FlowerScore[] {
   if (candidates.length <= targetSize) return [...candidates].sort((a, b) => b.total - a.total);
@@ -102,7 +128,6 @@ export function runGeneticAlgorithm(
   return pop[0].map(i => candidates[i]).sort((a, b) => b.total - a.total);
 }
 
-// НОВА ФУНКЦІЯ — автоматично обрізає до 10 (якщо після евристик залишилось більше)
 export function capToMaxSize(scores: FlowerScore[], maxSize = 10): FlowerScore[] {
   if (scores.length <= maxSize) return scores;
   return [...scores]
