@@ -10,7 +10,7 @@ import {
   runGeneticAlgorithm,
   applyHeuristicsSequentially,
   FlowerScore,
-} from './../utils/heuristicEngine';
+} from './../utils/geneticAlgorithm';
 
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const db = getDatabase(app);
