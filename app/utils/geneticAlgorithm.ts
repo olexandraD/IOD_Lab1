@@ -3,9 +3,9 @@ export interface FlowerScore {
   gold: number;
   silver: number;
   bronze: number;
-  total: number;
+  count: number;  // gold+silver+bronze (для евристик)
+  total: number;  // gold*3 + silver*2 + bronze (для ГА)
 }
-
 export const HEURISTIC_RULES: Record<string, (f: FlowerScore) => boolean> = {
   // E1: участь рівно в 1 порівнянні на 3 місці (методичка)
   e1: (f) => f.gold === 0 && f.silver === 0 && f.bronze === 1,
