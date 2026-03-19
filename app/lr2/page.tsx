@@ -3,7 +3,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { initializeApp, getApps } from "firebase/app";
 import { getDatabase, ref, push, onValue, set } from "firebase/database";
-
 import { firebaseConfig } from './../config/firebaseConfig';
 import { labStyles } from './../constants/labStyles';
 import { heuristics } from './../data/heuristics';
@@ -11,6 +10,7 @@ import {
   runGeneticAlgorithm,
   applyHeuristicsSequentially,
   FlowerScore,
+  capToMaxSize,
 } from './../utils/geneticAlgorithm';
 
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
@@ -21,7 +21,6 @@ interface HeuristicVote {
   choices: string[];
   time: string;
 }
-
 interface VoteRecord {
   choices: string[];
 }
@@ -43,7 +42,7 @@ export default function Lab2Page() {
   const [voteSent, setVoteSent] = useState(false);
   const [narrowStep, setNarrowStep] = useState(0);
   const [gaResult, setGaResult] = useState<FlowerScore[] | null>(null);
-  const [openStep, setOpenStep] = useState<number | null>(null); // акордеон
+  const [openStep, setOpenStep] = useState<number | null>(null);
 
   useEffect(() => {
     onValue(ref(db, 'heuristicVotes'), (snap) => {
@@ -86,6 +85,12 @@ export default function Lab2Page() {
     return applyHeuristicsSequentially(subset, orderedHeurIds);
   }, [subset, orderedHeurIds]);
 
+  // === ФІНАЛЬНА ПІДМНОЖИНА ≤ 10 (автоматичне обрізання) ===
+  const finalAfterHeuristics = useMemo(() => {
+    const last = narrowingSteps[narrowingSteps.length - 1]?.result ?? subset;
+    return capToMaxSize(last, 10);
+  }, [narrowingSteps, subset]);
+
   const currentNarrowSet: FlowerScore[] = useMemo(() => {
     if (narrowStep === 0) return subset;
     return narrowingSteps[narrowStep - 1]?.result ?? subset;
@@ -123,16 +128,14 @@ export default function Lab2Page() {
   };
 
   const runGA = () => {
-    const finalStep = narrowingSteps[narrowingSteps.length - 1];
-    const candidates = finalStep?.result ?? subset;
+    const candidates = finalAfterHeuristics;
     if (candidates.length === 0) return alert("Немає даних з ЛР1!");
-    setGaResult(runGeneticAlgorithm(candidates, Math.min(5, candidates.length)));
+    setGaResult(runGeneticAlgorithm(candidates, 10));
     setView('algo');
   };
 
   return (
     <div style={labStyles.mainContainer}>
-
       {/* NAV */}
       <nav style={labStyles.nav}>
         <h2 style={labStyles.navTitle}>ЛР2 • Евристичне обґрунтування звуження</h2>
@@ -150,7 +153,6 @@ export default function Lab2Page() {
       </nav>
 
       <main style={labStyles.main}>
-
         {view === 'vote' && (
           <>
             {!voteSent ? (
@@ -164,7 +166,6 @@ export default function Lab2Page() {
                     style={labStyles.inputField}
                   />
                 </div>
-
                 <div style={labStyles.card}>
                   <div style={labStyles.sectionTitle}>🎯 Оберіть 2–3 евристики для відсіювання об&apos;єктів</div>
                   <p style={{ color: '#6b7280', marginBottom: '20px', fontSize: '0.9rem' }}>
@@ -214,12 +215,11 @@ export default function Lab2Page() {
                     ↩ Ще раз
                   </button>
                 </div>
-
                 <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', flexWrap: 'wrap' as const }}>
                   {[
-                    { emoji: '🌸', value: subset.length,      label: 'Підмножина',  color: '#ec4899', bg: '#fff0f7' },
-                    { emoji: '✅', value: expertKeptCount,    label: 'Залишається', color: '#10b981', bg: '#f0fdf4' },
-                    { emoji: '✂️', value: expertRemovedCount, label: 'Відсіяно',    color: '#ef4444', bg: '#fef2f2' },
+                    { emoji: '🌸', value: subset.length, label: 'Підмножина', color: '#ec4899', bg: '#fff0f7' },
+                    { emoji: '✅', value: expertKeptCount, label: 'Залишається', color: '#10b981', bg: '#f0fdf4' },
+                    { emoji: '✂️', value: expertRemovedCount, label: 'Відсіяно', color: '#ef4444', bg: '#fef2f2' },
                   ].map(item => (
                     <div key={item.label} style={{ flex: 1, minWidth: '90px', background: item.bg, border: `1px solid ${item.color}30`, borderRadius: '12px', padding: '12px', textAlign: 'center' as const }}>
                       <div style={{ fontSize: '1.4rem' }}>{item.emoji}</div>
@@ -228,7 +228,6 @@ export default function Lab2Page() {
                     </div>
                   ))}
                 </div>
-
                 {/* Схема-стрілки (міні) */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '20px', flexWrap: 'wrap' as const, background: '#fdfaf7', borderRadius: '12px', padding: '12px 16px', border: '1px solid #ffe4e1' }}>
                   <span style={{ fontSize: '0.8rem', color: '#6b7280', marginRight: '4px' }}>Звуження:</span>
@@ -255,7 +254,6 @@ export default function Lab2Page() {
                     {expertKeptCount} ✓
                   </div>
                 </div>
-
                 {/* Акордеон — деталі кожної евристики */}
                 <div style={{ marginBottom: '20px' }}>
                   <div style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: '8px', fontWeight: 600 }}>
@@ -267,10 +265,8 @@ export default function Lab2Page() {
                     const keptSet = step.result;
                     const removedSet = inputSet.filter(f => !keptSet.some(k => k.name === f.name));
                     const isOpen = openStep === stepIdx;
-
                     return (
                       <div key={step.heurId} style={{ marginBottom: '6px', border: `1px solid ${step.removedCount > 0 ? '#fca5a5' : '#e5e7eb'}`, borderRadius: '10px', overflow: 'hidden' }}>
-                        {/* Рядок-заголовок — завжди видимий */}
                         <button
                           onClick={() => setOpenStep(isOpen ? null : stepIdx)}
                           style={{ width: '100%', background: isOpen ? '#fdfaf7' : '#fff', border: 'none', cursor: 'pointer', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '10px', textAlign: 'left' as const }}
@@ -280,7 +276,6 @@ export default function Lab2Page() {
                           </span>
                           <span style={{ ...labStyles.heurLabel(true), padding: '2px 10px', fontSize: '0.85rem' }}>{h?.label}</span>
                           <span style={{ fontSize: '0.85rem', color: '#374151', flex: 1, fontWeight: 600 }}>{h?.desc}</span>
-                          {/* Прогрес-бар міні */}
                           <div style={{ width: '80px', height: '6px', background: '#fee2e2', borderRadius: '99px', overflow: 'hidden', flexShrink: 0 }}>
                             <div style={{ height: '6px', width: `${(keptSet.length / (inputSet.length || 1)) * 100}%`, background: step.removedCount > 0 ? '#10b981' : '#9ca3af', borderRadius: '99px' }} />
                           </div>
@@ -289,12 +284,9 @@ export default function Lab2Page() {
                           </span>
                           <span style={{ color: '#9ca3af', fontSize: '0.8rem', flexShrink: 0 }}>{isOpen ? '▲' : '▼'}</span>
                         </button>
-
-                        {/* Розгорнутий вміст */}
                         {isOpen && (
                           <div style={{ padding: '0 14px 14px', background: '#fdfaf7', borderTop: '1px solid #ffe4e1' }}>
                             <div style={{ paddingTop: '12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                              {/* Залишились */}
                               <div>
                                 <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#10b981', marginBottom: '6px' }}>
                                   ✅ Залишаються ({keptSet.length})
@@ -308,7 +300,6 @@ export default function Lab2Page() {
                                   ))}
                                 </div>
                               </div>
-                              {/* Відсіялись */}
                               <div>
                                 <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#dc2626', marginBottom: '6px' }}>
                                   ✗ Відсіюються ({removedSet.length})
@@ -333,7 +324,6 @@ export default function Lab2Page() {
                     );
                   })}
                 </div>
-
                 {/* Фінальна сітка */}
                 <div style={{ borderTop: '2px solid #ffe4e1', paddingTop: '16px' }}>
                   <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#1f2937', marginBottom: '10px' }}>
@@ -395,7 +385,6 @@ export default function Lab2Page() {
                 </div>
               ))}
             </div>
-
             <div style={labStyles.card}>
               <div style={labStyles.sectionTitle}>✂️ Покрокове звуження підмножини</div>
               <p style={{ color: '#6b7280', marginBottom: '8px', fontSize: '0.9rem' }}>
@@ -408,7 +397,6 @@ export default function Lab2Page() {
                   return <span key={id}>{i > 0 && ' → '}<b style={labStyles.accentText}>{h?.label}</b></span>;
                 })}
               </div>
-
               <div style={{ display: 'flex', gap: '10px', marginBottom: '24px', flexWrap: 'wrap' as const }}>
                 <button onClick={() => setNarrowStep(0)} style={labStyles.narrowStepBtn(narrowStep === 0)}>
                   📋 Початок<br /><span style={{ fontSize: '0.75rem', fontWeight: 400, color: '#6b7280' }}>{subset.length} об.</span>
@@ -425,7 +413,6 @@ export default function Lab2Page() {
                   );
                 })}
               </div>
-
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '8px' }}>
                 {subset.map(f => {
                   const kept = currentNarrowSet.some(c => c.name === f.name);
@@ -464,12 +451,11 @@ export default function Lab2Page() {
         {view === 'admin' && (
           <>
             <h1 style={labStyles.voteTitle}>🔐 Адмін-панель ЛР2</h1>
-
             <div style={labStyles.summaryGrid}>
               {[
                 { emoji: '👥', value: heurVotes.length, label: 'Голосів', color: '#ec4899' },
                 { emoji: '🌸', value: subset.length, label: 'Підмножина ЛР2', color: '#8b5cf6' },
-                { emoji: '✂️', value: narrowingSteps[narrowingSteps.length - 1]?.result.length ?? subset.length, label: 'Після евристик', color: '#10b981' },
+                { emoji: '✂️', value: finalAfterHeuristics.length, label: 'Після евристик', color: '#10b981' },
               ].map(item => (
                 <div key={item.label} style={{ ...labStyles.summaryCard, borderTop: `3px solid ${item.color}` }}>
                   <div style={{ fontSize: '2rem' }}>{item.emoji}</div>
@@ -478,7 +464,6 @@ export default function Lab2Page() {
                 </div>
               ))}
             </div>
-
             <div style={labStyles.resultsBox}>
               <div style={labStyles.resultsHeader}>
                 <h2 style={labStyles.resultsTitle}>📋 Бюлетені експертів</h2>
@@ -514,7 +499,6 @@ export default function Lab2Page() {
                 </div>
               )}
             </div>
-
             <div style={labStyles.card}>
               <div style={labStyles.sectionTitle}>📊 Узагальнений рейтинг евристик</div>
               <p style={{ color: '#6b7280', fontSize: '0.85rem', marginBottom: '16px' }}>
@@ -536,7 +520,6 @@ export default function Lab2Page() {
                 </div>
               ))}
             </div>
-
             <div style={labStyles.card}>
               <div style={labStyles.sectionTitle}>✂️ Покрокове звуження + Генетичний Алгоритм</div>
               <div style={{ display: 'flex', gap: '10px', marginBottom: '24px', flexWrap: 'wrap' as const }}>
@@ -575,17 +558,15 @@ export default function Lab2Page() {
         {view === 'algo' && (
           <>
             <h1 style={labStyles.voteTitle}>🧬 Генетичний Алгоритм — Фінальне ранжування</h1>
-
             <div style={labStyles.card}>
               <div style={labStyles.sectionTitle}>ℹ️ Опис алгоритму</div>
               <p style={{ color: '#374151', lineHeight: '1.8', marginBottom: 0, fontSize: '0.95rem' }}>
-                ГА відбирає оптимальну підмножину після застосування евристик у порядку популярності.<br /><br />
+                ГА відбирає оптимальну підмножину <b>з 10 об’єктів</b> після застосування евристик у порядку популярності.<br /><br />
                 <b>Параметри:</b> Популяція = 30 · Покоління = 100 · Мутація = 10%<br />
                 <b>Функція придатності:</b> Σ (🥇×3 + 🥈×2 + 🥉×1)<br />
                 <b>Оператори:</b> Елітарний відбір (топ-6) · Кросинговер · Рандомна мутація
               </p>
             </div>
-
             <div style={labStyles.card}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap' as const, gap: '12px' }}>
                 <div style={labStyles.sectionTitle}>🏆 Результат ГА</div>
@@ -612,13 +593,12 @@ export default function Lab2Page() {
                   <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '12px', padding: '16px 20px' }}>
                     <b style={{ color: '#166534' }}>✅ Фінальна підмножина сформована!</b>
                     <p style={{ color: '#166534', marginTop: '6px', marginBottom: 0, fontSize: '0.9rem' }}>
-                      ГА відібрав {gaResult.length} найкращих об&apos;єктів.
+                      ГА відібрав {gaResult.length} найкращих об&apos;єктів (з 10).
                     </p>
                   </div>
                 </>
               )}
             </div>
-
             <div style={labStyles.card}>
               <div style={labStyles.sectionTitle}>📉 Ілюстрація звуження підмножини</div>
               <div style={{ display: 'flex', alignItems: 'center', overflowX: 'auto', padding: '10px 0', gap: '4px' }}>
@@ -644,7 +624,7 @@ export default function Lab2Page() {
                 })}
                 <div style={{ fontSize: '1.3rem', color: '#d1d5db', flexShrink: 0, marginBottom: '20px' }}>→</div>
                 <div style={{ textAlign: 'center', minWidth: '90px' }}>
-                  <div style={labStyles.flowCircle('#10b981')}>{gaResult?.length ?? '?'}</div>
+                  <div style={labStyles.flowCircle('#10b981')}>{gaResult?.length ?? finalAfterHeuristics.length}</div>
                   <div style={{ fontSize: '0.7rem', color: '#374151', fontWeight: 600 }}>🧬 Результат ГА</div>
                 </div>
               </div>
