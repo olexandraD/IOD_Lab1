@@ -10,15 +10,14 @@ import {
   runGeneticAlgorithm,
   applyHeuristicsSequentially,
   FlowerScore,
-  capToMaxSize,
-} from './../utils/geneticAlgorithm';
+} from './../utils/heuristicEngine';
 
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 interface HeuristicVote {
   expert: string;
-  choices: string[];
+  choices: string[]; // зберігаємо id евристик: ['e1', 'e3']
   time: string;
 }
 interface VoteRecord {
@@ -26,7 +25,7 @@ interface VoteRecord {
 }
 
 function getSubset(scores: FlowerScore[]): FlowerScore[] {
-  const withVotes = scores.filter(f => f.total > 0);
+  const withVotes = scores.filter(f => f.count > 0);
   const capped = withVotes.slice(0, 19);
   return capped.length >= 10 ? capped : withVotes;
 }
@@ -53,42 +52,57 @@ export default function Lab2Page() {
     });
   }, []);
 
+  // ── Будуємо FlowerScore з голосів ЛР1 ───────────────────────────────────
+  // total = просто кількість згадувань (gold+silver+bronze) — для евристик!
+  // weighted = gold*3 + silver*2 + bronze*1 — для ГА і сортування
   const allFlowerScores: FlowerScore[] = useMemo(() => {
-    const map: Record<string, FlowerScore> = {};
+    const map: Record<string, { gold: number; silver: number; bronze: number }> = {};
     lr1Votes.forEach(vote => {
       vote.choices?.forEach((name: string, idx: number) => {
-        if (!map[name]) map[name] = { name, gold: 0, silver: 0, bronze: 0, total: 0 };
+        if (!map[name]) map[name] = { gold: 0, silver: 0, bronze: 0 };
         if (idx === 0) map[name].gold++;
         if (idx === 1) map[name].silver++;
         if (idx === 2) map[name].bronze++;
       });
     });
-    Object.values(map).forEach(f => { f.total = f.gold * 3 + f.silver * 2 + f.bronze; });
-    return Object.values(map).sort((a, b) => b.total - a.total);
+    return Object.entries(map)
+      .map(([name, m]) => ({
+        name,
+        gold: m.gold,
+        silver: m.silver,
+        bronze: m.bronze,
+        // count = сума голосів (для евристик)
+        count: m.gold + m.silver + m.bronze,
+        // total = зважений бал (для сортування і ГА)
+        total: m.gold * 3 + m.silver * 2 + m.bronze,
+      }))
+      .sort((a, b) => b.total - a.total);
   }, [lr1Votes]);
 
   const subset = useMemo(() => getSubset(allFlowerScores), [allFlowerScores]);
 
+  // ── Рейтинг евристик: зберігаємо id, шукаємо по id ─────────────────────
   const heurPopularity = useMemo(() => {
     return heuristics.map(h => ({
       ...h,
-      votes: heurVotes.filter(v => v.choices?.some((c: string) => c?.includes(h.label))).length,
+      votes: heurVotes.filter(v => v.choices?.includes(h.id)).length,
     })).sort((a, b) => b.votes - a.votes);
   }, [heurVotes]);
 
   const orderedHeurIds: string[] = useMemo(() => {
     const withVotes = heurPopularity.filter(h => h.votes > 0);
-    return withVotes.length > 0 ? withVotes.map(h => h.id) : ['e1', 'e2', 'e3'];
+    return withVotes.length > 0
+      ? withVotes.map(h => h.id)
+      : ['e1', 'e2', 'e3'];
   }, [heurPopularity]);
 
+  // ── Звуження за загальним голосуванням ──────────────────────────────────
   const narrowingSteps = useMemo(() => {
     return applyHeuristicsSequentially(subset, orderedHeurIds);
   }, [subset, orderedHeurIds]);
 
-  // === ФІНАЛЬНА ПІДМНОЖИНА ≤ 10 (автоматичне обрізання) ===
   const finalAfterHeuristics = useMemo(() => {
-    const last = narrowingSteps[narrowingSteps.length - 1]?.result ?? subset;
-    return capToMaxSize(last, 10);
+    return narrowingSteps[narrowingSteps.length - 1]?.result ?? subset;
   }, [narrowingSteps, subset]);
 
   const currentNarrowSet: FlowerScore[] = useMemo(() => {
@@ -98,6 +112,7 @@ export default function Lab2Page() {
 
   const maxHeurVotes = Math.max(...heurPopularity.map(h => h.votes), 1);
 
+  // ── Звуження за вибором конкретного експерта ────────────────────────────
   const expertNarrowingSteps = useMemo(() => {
     return applyHeuristicsSequentially(subset, selectedHeur);
   }, [subset, selectedHeur]);
@@ -109,12 +124,10 @@ export default function Lab2Page() {
   const sendVote = async () => {
     if (!expertName.trim()) return alert("Введіть ім'я експерта!");
     if (selectedHeur.length === 0) return alert("Оберіть хоча б одну евристику!");
+    // Зберігаємо id евристик (не label!) — для надійного пошуку
     await push(ref(db, 'heuristicVotes'), {
       expert: expertName,
-      choices: selectedHeur.map(id => {
-        const h = heuristics.find(h => h.id === id)!;
-        return `${h.label}. ${h.desc}`;
-      }),
+      choices: selectedHeur, // ['e1', 'e3', ...]
       time: new Date().toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' }),
     });
     setVoteSent(true);
@@ -128,9 +141,8 @@ export default function Lab2Page() {
   };
 
   const runGA = () => {
-    const candidates = finalAfterHeuristics;
-    if (candidates.length === 0) return alert("Немає даних з ЛР1!");
-    setGaResult(runGeneticAlgorithm(candidates, 10));
+    if (finalAfterHeuristics.length === 0) return alert("Немає даних з ЛР1!");
+    setGaResult(runGeneticAlgorithm(finalAfterHeuristics, 10));
     setView('algo');
   };
 
@@ -153,6 +165,7 @@ export default function Lab2Page() {
       </nav>
 
       <main style={labStyles.main}>
+        {/* ════ VOTE ════ */}
         {view === 'vote' && (
           <>
             {!voteSent ? (
@@ -215,6 +228,8 @@ export default function Lab2Page() {
                     ↩ Ще раз
                   </button>
                 </div>
+
+                {/* Статистика */}
                 <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', flexWrap: 'wrap' as const }}>
                   {[
                     { emoji: '🌸', value: subset.length, label: 'Підмножина', color: '#ec4899', bg: '#fff0f7' },
@@ -228,7 +243,8 @@ export default function Lab2Page() {
                     </div>
                   ))}
                 </div>
-                {/* Схема-стрілки (міні) */}
+
+                {/* Схема звуження */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '20px', flexWrap: 'wrap' as const, background: '#fdfaf7', borderRadius: '12px', padding: '12px 16px', border: '1px solid #ffe4e1' }}>
                   <span style={{ fontSize: '0.8rem', color: '#6b7280', marginRight: '4px' }}>Звуження:</span>
                   <div style={{ display: 'flex', alignItems: 'center', background: '#ec4899', color: '#fff', borderRadius: '999px', padding: '3px 12px', fontWeight: 800, fontSize: '0.85rem' }}>
@@ -254,7 +270,8 @@ export default function Lab2Page() {
                     {expertKeptCount} ✓
                   </div>
                 </div>
-                {/* Акордеон — деталі кожної евристики */}
+
+                {/* Акордеон деталей */}
                 <div style={{ marginBottom: '20px' }}>
                   <div style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: '8px', fontWeight: 600 }}>
                     Деталі по кожній евристиці (натисніть щоб розкрити):
@@ -324,6 +341,7 @@ export default function Lab2Page() {
                     );
                   })}
                 </div>
+
                 {/* Фінальна сітка */}
                 <div style={{ borderTop: '2px solid #ffe4e1', paddingTop: '16px' }}>
                   <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#1f2937', marginBottom: '10px' }}>
@@ -334,22 +352,20 @@ export default function Lab2Page() {
                       const kept = expertFinal.some(k => k.name === f.name);
                       return (
                         <div key={f.name} style={{
-                          padding: '6px 10px',
-                          borderRadius: '8px',
+                          padding: '6px 10px', borderRadius: '8px',
                           background: kept ? '#f0fdf4' : '#fef2f2',
                           border: `1px solid ${kept ? '#86efac' : '#fca5a5'}`,
-                          fontSize: '0.82rem',
-                          fontWeight: 600,
+                          fontSize: '0.82rem', fontWeight: 600,
                           color: kept ? '#166534' : '#991b1b',
                           textDecoration: kept ? 'none' : 'line-through',
                           opacity: kept ? 1 : 0.65,
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
+                          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                         }}>
                           <span>{f.name}</span>
                           <span style={{ fontSize: '0.72rem', textDecoration: 'none' }}>
-                            {kept ? <span style={{ color: '#16a34a' }}>{f.total}б</span> : <span style={{ color: '#dc2626' }}>✗</span>}
+                            {kept
+                              ? <span style={{ color: '#16a34a' }}>{f.total}б</span>
+                              : <span style={{ color: '#dc2626' }}>✗</span>}
                           </span>
                         </div>
                       );
@@ -427,6 +443,7 @@ export default function Lab2Page() {
           </>
         )}
 
+        {/* ════ LOGIN ════ */}
         {view === 'login' && (
           <div style={labStyles.loginBox}>
             <div style={labStyles.loginEmoji}>🔐</div>
@@ -448,6 +465,7 @@ export default function Lab2Page() {
           </div>
         )}
 
+        {/* ════ ADMIN ════ */}
         {view === 'admin' && (
           <>
             <h1 style={labStyles.voteTitle}>🔐 Адмін-панель ЛР2</h1>
@@ -490,7 +508,13 @@ export default function Lab2Page() {
                         <tr key={i}>
                           <td style={labStyles.tdFlower(i, false)}>{i + 1}</td>
                           <td style={{ ...labStyles.tdCenter(i, false), textAlign: 'left' as const, color: '#1f2937', fontWeight: 600 }}>{v.expert}</td>
-                          <td style={{ ...labStyles.tdCenter(i, false), textAlign: 'left' as const, fontSize: '0.85rem' }}>{v.choices?.join(' • ')}</td>
+                          <td style={{ ...labStyles.tdCenter(i, false), textAlign: 'left' as const, fontSize: '0.85rem' }}>
+                            {/* Відображаємо label евристик для читабельності */}
+                            {v.choices?.map(id => {
+                              const h = heuristics.find(h => h.id === id);
+                              return h ? `${h.label}. ${h.desc}` : id;
+                            }).join(' • ')}
+                          </td>
                           <td style={labStyles.tdRight(i, false)}>{v.time}</td>
                         </tr>
                       ))}
@@ -501,9 +525,6 @@ export default function Lab2Page() {
             </div>
             <div style={labStyles.card}>
               <div style={labStyles.sectionTitle}>📊 Узагальнений рейтинг евристик</div>
-              <p style={{ color: '#6b7280', fontSize: '0.85rem', marginBottom: '16px' }}>
-                Порядок популярності визначає черговість застосування при звуженні.
-              </p>
               {heurPopularity.map((h, i) => (
                 <div key={h.id} style={{ marginBottom: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', alignItems: 'center', gap: '8px' }}>
@@ -555,13 +576,14 @@ export default function Lab2Page() {
           </>
         )}
 
+        {/* ════ ALGO ════ */}
         {view === 'algo' && (
           <>
             <h1 style={labStyles.voteTitle}>🧬 Генетичний Алгоритм — Фінальне ранжування</h1>
             <div style={labStyles.card}>
               <div style={labStyles.sectionTitle}>ℹ️ Опис алгоритму</div>
               <p style={{ color: '#374151', lineHeight: '1.8', marginBottom: 0, fontSize: '0.95rem' }}>
-                ГА відбирає оптимальну підмножину <b>з 10 об’єктів</b> після застосування евристик у порядку популярності.<br /><br />
+                ГА відбирає оптимальну підмножину <b>з 10 об'єктів</b> після застосування евристик.<br /><br />
                 <b>Параметри:</b> Популяція = 30 · Покоління = 100 · Мутація = 10%<br />
                 <b>Функція придатності:</b> Σ (🥇×3 + 🥈×2 + 🥉×1)<br />
                 <b>Оператори:</b> Елітарний відбір (топ-6) · Кросинговер · Рандомна мутація
@@ -593,7 +615,7 @@ export default function Lab2Page() {
                   <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '12px', padding: '16px 20px' }}>
                     <b style={{ color: '#166534' }}>✅ Фінальна підмножина сформована!</b>
                     <p style={{ color: '#166534', marginTop: '6px', marginBottom: 0, fontSize: '0.9rem' }}>
-                      ГА відібрав {gaResult.length} найкращих об&apos;єктів (з 10).
+                      ГА відібрав {gaResult.length} найкращих об&apos;єктів.
                     </p>
                   </div>
                 </>
@@ -633,7 +655,7 @@ export default function Lab2Page() {
         )}
       </main>
 
-      {/* Нижня панель */}
+      {/* ════ BOTTOM BAR ════ */}
       {view === 'vote' && !voteSent && selectedHeur.length > 0 && (
         <div style={labStyles.bottomBar}>
           <div style={labStyles.bottomContent}>
