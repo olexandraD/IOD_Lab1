@@ -3,31 +3,25 @@ export interface FlowerScore {
   gold: number;
   silver: number;
   bronze: number;
-  count: number;
-  total: number;
+  count: number;   // gold+silver+bronze (для евристик)
+  total: number;   // gold*3 + silver*2 + bronze (для ГА)
 }
 
 export const HEURISTIC_RULES: Record<string, (f: FlowerScore) => boolean> = {
-  // E1: рівно 1 раз на 3 місці (методичка)
+  // E1: рівно 1 раз на 3 місці
   e1: (f) => f.gold === 0 && f.silver === 0 && f.bronze === 1,
-
-  // E2: рівно 1 раз на 2 місці (методичка)
+  // E2: рівно 1 раз на 2 місці
   e2: (f) => f.gold === 0 && f.silver === 1 && f.bronze === 0,
-
-  // E3: рівно 1 раз на 1 місці (методичка)
+  // E3: рівно 1 раз на 1 місці
   e3: (f) => f.gold === 1 && f.silver === 0 && f.bronze === 0,
-
-  // E4: рівно 2 рази на 3 місці (методичка)
+  // E4: рівно 2 рази на 3 місці
   e4: (f) => f.gold === 0 && f.silver === 0 && f.bronze === 2,
-
-  // E5: рівно 1 раз на 3 місці + 1 раз на 2 місці (методичка)
+  // E5: рівно 1 раз на 2 місці + 1 раз на 3 місці
   e5: (f) => f.gold === 0 && f.silver === 1 && f.bronze === 1,
-
-  // E6: без золота і загальна кількість голосів ≤ 2 (власна)
+  // E6: без золота і count <= 2 (власна)
   e6: (f) => f.gold === 0 && f.count <= 2,
-
-  // E7: без золота і зважений бал ≤ 3 (власна) — відсіює слабких срібних/бронзових
-  e7: (f) => f.gold === 0 && f.total <= 3,
+  // E7: без золота і total <= 5 (власна)
+  e7: (f) => f.gold === 0 && f.total <= 5,
 };
 
 export const HEURISTIC_EXPLANATIONS: Record<string, string> = {
@@ -37,7 +31,7 @@ export const HEURISTIC_EXPLANATIONS: Record<string, string> = {
   e4: 'Участь рівно 2 рази на 3 місці (bronze=2, gold=0, silver=0).',
   e5: 'Участь 1 раз на 2 місці та 1 раз на 3 місці (gold=0, silver=1, bronze=1).',
   e6: 'Власна: без золота і не більше 2 голосів загалом.',
-  e7: 'Власна: без золота і зважений бал ≤ 3 (gold×3 + silver×2 + bronze×1 ≤ 3).',
+  e7: 'Власна: без золота і зважений бал ≤ 5.',
 };
 
 export function applyHeuristic(
@@ -77,7 +71,6 @@ export function applyHeuristicsSequentially(
   return steps;
 }
 
-// ── Генетичний алгоритм ──────────────────────────────────────────────────────
 type Individual = number[];
 
 const fitness = (ind: Individual, c: FlowerScore[]) =>
