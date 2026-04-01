@@ -8,30 +8,36 @@ export interface FlowerScore {
 }
 
 export const HEURISTIC_RULES: Record<string, (f: FlowerScore) => boolean> = {
-  // Точно 1 раз на 3 місці, нічого іншого
-  e1: (f) => f.gold === 0 && f.silver === 0 && f.bronze === 1,
-  // Точно 1 раз на 2 місці, нічого іншого
-  e2: (f) => f.gold === 0 && f.silver === 1 && f.bronze === 0,
-  // Точно 1 раз на 1 місці, нічого іншого
-  e3: (f) => f.gold === 1 && f.silver === 0 && f.bronze === 0,
-  // Точно 2 рази на 3 місці, нічого іншого
-  e4: (f) => f.gold === 0 && f.silver === 0 && f.bronze === 2,
-  // Точно 1 раз на 2 місці + 1 раз на 3 місці, без золота
-  e5: (f) => f.gold === 0 && f.silver === 1 && f.bronze === 1,
-  // Власна: без золота і не більше 2 голосів загалом
+  // Тільки 3-і місця, жодного 1-го чи 2-го
+  e1: (f) => f.gold === 0 && f.silver === 0 && f.bronze >= 1,
+
+  // Тільки до 2-го включно, жодного 1-го
+  e2: (f) => f.gold === 0 && f.silver >= 1,
+
+  // Рівно 1 голос, і лише на 1-му місці
+  e3: (f) => f.gold === 1 && f.silver === 0 && f.bronze === 0 && f.count === 1,
+
+  // Тільки 3-і місця і їх >= 2
+  e4: (f) => f.gold === 0 && f.silver === 0 && f.bronze >= 2,
+
+  // Є 2-е і 3-є місця одночасно, без 1-го
+  e5: (f) => f.gold === 0 && f.silver >= 1 && f.bronze >= 1,
+
+  // Власна: без золота і <= 2 голосів загалом
   e6: (f) => f.gold === 0 && f.count <= 2,
+
   // Власна: без золота і зважений бал <= 6
   e7: (f) => f.gold === 0 && f.total <= 6,
 };
 
 export const HEURISTIC_EXPLANATIONS: Record<string, string> = {
-  e1: 'Участь рівно 1 раз на 3 місці (bronze=1, gold=0, silver=0).',
-  e2: 'Участь рівно 1 раз на 2 місці (silver=1, gold=0, bronze=0).',
-  e3: 'Участь рівно 1 раз на 1 місці (gold=1, silver=0, bronze=0).',
-  e4: 'Участь рівно 2 рази на 3 місці (bronze=2, gold=0, silver=0).',
-  e5: 'Участь 1 раз на 2 місці та 1 раз на 3 місці (gold=0, silver=1, bronze=1).',
+  e1: 'Лише 3-і місця, жодного 1-го чи 2-го (gold=0, silver=0, bronze≥1).',
+  e2: 'Лише до 2-го місця включно, жодного 1-го (gold=0, silver≥1).',
+  e3: 'Рівно 1 голос і лише на 1-му місці (gold=1, count=1).',
+  e4: 'Лише 3-і місця і їх ≥ 2 (gold=0, silver=0, bronze≥2).',
+  e5: 'Є 2-е і 3-є місця, але немає 1-го (gold=0, silver≥1, bronze≥1).',
   e6: 'Власна: без золота і не більше 2 голосів загалом.',
-  e7: 'Власна: без золота і зважений бал <= 6.',
+  e7: 'Власна: без золота і зважений бал ≤ 6.',
 };
 
 export function applyHeuristic(
@@ -57,7 +63,7 @@ export function applyHeuristicsSequentially(
     const heurId = heurIds[i];
     const { kept, removed } = applyHeuristic(current, heurId);
 
-    // Якщо евристика видалить усіх — пропускаємо, фіксуємо крок без змін
+    // Якщо евристика видалить усіх — пропускаємо
     if (kept.length === 0) {
       steps.push({ step: i + 1, heurId, result: [...current], removedCount: 0 });
       continue;
@@ -66,14 +72,16 @@ export function applyHeuristicsSequentially(
     current = kept;
     steps.push({ step: i + 1, heurId, result: [...current], removedCount: removed.length });
 
-    // Зупиняємось, якщо вже досягли мети (<= 10 об'єктів)
+    // Мета досягнута
     if (current.length <= 10) break;
   }
 
   return steps;
 }
 
+// ─────────────────────────────────────────────────────────────
 //  ГЕНЕТИЧНИЙ АЛГОРИТМ
+// ─────────────────────────────────────────────────────────────
 type Individual = number[];
 
 const fitness = (ind: Individual, c: FlowerScore[]) =>
@@ -95,7 +103,6 @@ const crossover = (
     if (j < b.length && Math.random() > 0.5) child.add(b[j]);
     i++; j++;
   }
-  // Добрати відсутніх якщо не вистачає
   for (let k = 0; child.size < size && k < total; k++) child.add(k);
   return Array.from(child).slice(0, size);
 };
@@ -115,7 +122,6 @@ export function runGeneticAlgorithm(
   targetSize = 10,
   opts = { popSize: 30, generations: 100, mutationRate: 0.1, eliteCount: 6 }
 ): FlowerScore[] {
-  // Якщо кандидатів вже <= targetSize — просто відсортувати
   if (candidates.length <= targetSize)
     return [...candidates].sort((a, b) => b.total - a.total);
 
