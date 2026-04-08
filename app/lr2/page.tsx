@@ -134,8 +134,8 @@ const [gaLog, setGaLog] = useState<GenerationLog[]>([]);
   };
 
 const runGA = () => {
-  if (finalAfterHeuristics.length === 0) return alert("Немає даних з ЛР1!");
-  const { result, log } = runGeneticAlgorithm(finalAfterHeuristics, 10);
+  if (subset.length === 0) return alert("Немає даних з ЛР1!");
+  const { result, log } = runGeneticAlgorithm(subset, 10);
   setGaResult(result);
   setGaLog(log);
   setView('algo');
@@ -554,19 +554,19 @@ const runGA = () => {
           </>
         )}
 
-        {/* ════ ALGO ════ */}
         {view === 'algo' && (
   <>
     <h1 style={labStyles.voteTitle}>🧬 Генетичний Алгоритм — Фінальне ранжування</h1>
-    
+
     <div style={labStyles.card}>
       <div style={labStyles.sectionTitle}>ℹ️ Опис алгоритму</div>
       <p style={{ color: '#374151', lineHeight: '1.8', marginBottom: 0, fontSize: '0.95rem' }}>
-        ГА знаходить оптимальне <b>консенсусне ранжування</b> підмножини після евристик.<br /><br />
-        <b>Параметри:</b> Популяція = 40 · Покоління = 150 · Мутація = 15% · Еліта = 8<br />
-        <b>Критерій 1:</b> Мінімум суми відстаней Кендалла від ранжування до кожного експертного<br />
-        <b>Критерій 2:</b> Мінімум максимальної відстані (мінімакс)<br />
-        <b>Оператори:</b> Елітарний відбір · Order Crossover (OX) · Swap-мутація
+        ГА отримує підмножину квіток і знаходить їх оптимальне <b>консенсусне ранжування</b> — порядок,
+        який найкраще узгоджується з усіма голосами експертів з ЛР1.<br /><br />
+        <b>Вхід:</b> підмножина об&apos;єктів · <b>Вихід:</b> ранжування топ-10<br />
+        <b>Популяція:</b> 40 особин · <b>Поколінь:</b> 150 · <b>Мутація:</b> 15% · <b>Еліта:</b> 8<br />
+        <b>Функція придатності:</b> 0.5 × сума відстаней Кендалла + 0.5 × максимальна відстань<br />
+        <b>Оператори:</b> Order Crossover (OX) · Swap-мутація · Елітарний відбір
       </p>
     </div>
 
@@ -585,7 +585,7 @@ const runGA = () => {
             {gaResult.map((f, i) => (
               <div key={f.name} style={labStyles.gaCard(i === 0)}>
                 <div style={{ fontSize: '1.8rem', marginBottom: '8px' }}>
-                  {(['🥇', '🥈', '🥉', '4️⃣', '5️⃣'] as const)[i] ?? `${i + 1}.`}
+                  {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}
                 </div>
                 <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: '6px' }}>{f.name}</div>
                 <div style={{ color: '#ec4899', fontWeight: 800, fontSize: '1.3rem' }}>{f.total} б.</div>
@@ -596,14 +596,13 @@ const runGA = () => {
           <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '12px', padding: '16px 20px' }}>
             <b style={{ color: '#166534' }}>✅ Консенсусне ранжування сформовано!</b>
             <p style={{ color: '#166534', marginTop: '6px', marginBottom: 0, fontSize: '0.9rem' }}>
-              ГА відібрав {gaResult.length} об&apos;єктів з мінімальною сумарною та мінімаксною відстанню від експертних ранжувань.
+              Відібрано {gaResult.length} об&apos;єктів у порядку мінімальної незгоди між усіма експертами.
             </p>
           </div>
         </>
       )}
     </div>
 
-    {/* ТАБЛИЦЯ ПОКОЛІНЬ */}
     {gaLog.length > 0 && (
       <div style={labStyles.card}>
         <div style={labStyles.sectionTitle}>📈 Динаміка збіжності ГА</div>
@@ -623,12 +622,11 @@ const runGA = () => {
             </thead>
             <tbody>
               {gaLog.map((row, i) => {
-                const isFirst = i === 0;
                 const isLast = i === gaLog.length - 1;
                 const improved = i > 0 && row.bestFitness < gaLog[i - 1].bestFitness;
                 return (
                   <tr key={row.generation} style={{
-                    background: isLast ? '#f0fdf4' : isFirst ? '#fdfaf7' : i % 2 === 0 ? '#ffffff' : '#fafafa',
+                    background: isLast ? '#f0fdf4' : i % 2 === 0 ? '#ffffff' : '#fafafa',
                   }}>
                     <td style={{ padding: '8px 14px', fontSize: '0.82rem', fontWeight: isLast ? 700 : 400, color: isLast ? '#166534' : '#374151', borderBottom: '1px solid #ffe4e1' }}>
                       {isLast ? '🏁 ' : ''}{row.generation}
