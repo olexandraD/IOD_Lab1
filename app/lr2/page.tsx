@@ -10,6 +10,7 @@ import {
   runGeneticAlgorithm,
   applyHeuristicsSequentially,
   FlowerScore,
+  GenerationLog, 
 } from './../utils/geneticAlgorithm';
 
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
@@ -41,7 +42,8 @@ export default function Lab2Page() {
   const [pass, setPass] = useState('');
   const [voteSent, setVoteSent] = useState(false);
   const [narrowStep, setNarrowStep] = useState(0);
-  const [gaResult, setGaResult] = useState<FlowerScore[] | null>(null);
+const [gaResult, setGaResult] = useState<FlowerScore[] | null>(null);
+const [gaLog, setGaLog] = useState<GenerationLog[]>([]);
   const [openStep, setOpenStep] = useState<number | null>(null);
 
   useEffect(() => {
@@ -52,10 +54,7 @@ export default function Lab2Page() {
       setLr1Votes(snap.val() ? Object.values(snap.val()) as VoteRecord[] : []);
     });
   }, []);
-
-  // Будуємо FlowerScore з голосів ЛР1
-  // count = gold+silver+bronze (для евристик)
-  // total = gold*3 + silver*2 + bronze (для ГА і сортування)
+  
   const allFlowerScores: FlowerScore[] = useMemo(() => {
     const map: Record<string, { gold: number; silver: number; bronze: number }> = {};
     lr1Votes.forEach(vote => {
@@ -134,11 +133,13 @@ export default function Lab2Page() {
     }
   };
 
-  const runGA = () => {
-    if (finalAfterHeuristics.length === 0) return alert("Немає даних з ЛР1!");
-    setGaResult(runGeneticAlgorithm(finalAfterHeuristics, 10));
-    setView('algo');
-  };
+const runGA = () => {
+  if (finalAfterHeuristics.length === 0) return alert("Немає даних з ЛР1!");
+  const { result, log } = runGeneticAlgorithm(finalAfterHeuristics, 10);
+  setGaResult(result);
+  setGaLog(log);
+  setView('algo');
+};
 
   return (
     <div style={labStyles.mainContainer}>
@@ -555,81 +556,106 @@ export default function Lab2Page() {
 
         {/* ════ ALGO ════ */}
         {view === 'algo' && (
-          <>
-            <h1 style={labStyles.voteTitle}>🧬 Генетичний Алгоритм — Фінальне ранжування</h1>
-            <div style={labStyles.card}>
-              <div style={labStyles.sectionTitle}>ℹ️ Опис алгоритму</div>
-              <p style={{ color: '#374151', lineHeight: '1.8', marginBottom: 0, fontSize: '0.95rem' }}>
-                ГА відбирає оптимальну підмножину <b>з 10 об&apos;єктів</b> після застосування евристик.<br /><br />
-                <b>Параметри:</b> Популяція = 30 · Покоління = 100 · Мутація = 10%<br />
-                <b>Функція придатності:</b> Σ (🥇×3 + 🥈×2 + 🥉×1)<br />
-                <b>Оператори:</b> Елітарний відбір (топ-6) · Кросинговер · Рандомна мутація
-              </p>
-            </div>
-            <div style={labStyles.card}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap' as const, gap: '12px' }}>
-                <div style={labStyles.sectionTitle}>🏆 Результат ГА</div>
-                <button style={labStyles.accentBtn} onClick={runGA}>▶ Перезапустити ГА</button>
+  <>
+    <h1 style={labStyles.voteTitle}>🧬 Генетичний Алгоритм — Фінальне ранжування</h1>
+    
+    <div style={labStyles.card}>
+      <div style={labStyles.sectionTitle}>ℹ️ Опис алгоритму</div>
+      <p style={{ color: '#374151', lineHeight: '1.8', marginBottom: 0, fontSize: '0.95rem' }}>
+        ГА знаходить оптимальне <b>консенсусне ранжування</b> підмножини після евристик.<br /><br />
+        <b>Параметри:</b> Популяція = 40 · Покоління = 150 · Мутація = 15% · Еліта = 8<br />
+        <b>Критерій 1:</b> Мінімум суми відстаней Кендалла від ранжування до кожного експертного<br />
+        <b>Критерій 2:</b> Мінімум максимальної відстані (мінімакс)<br />
+        <b>Оператори:</b> Елітарний відбір · Order Crossover (OX) · Swap-мутація
+      </p>
+    </div>
+
+    <div style={labStyles.card}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap' as const, gap: '12px' }}>
+        <div style={labStyles.sectionTitle}>🏆 Результат ГА</div>
+        <button style={labStyles.accentBtn} onClick={runGA}>▶ Перезапустити ГА</button>
+      </div>
+      {!gaResult ? (
+        <div style={{ textAlign: 'center', padding: '40px' }}>
+          <button style={labStyles.purpleBtn} onClick={runGA}>🧬 Запустити ГА</button>
+        </div>
+      ) : (
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '14px', marginBottom: '24px' }}>
+            {gaResult.map((f, i) => (
+              <div key={f.name} style={labStyles.gaCard(i === 0)}>
+                <div style={{ fontSize: '1.8rem', marginBottom: '8px' }}>
+                  {(['🥇', '🥈', '🥉', '4️⃣', '5️⃣'] as const)[i] ?? `${i + 1}.`}
+                </div>
+                <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: '6px' }}>{f.name}</div>
+                <div style={{ color: '#ec4899', fontWeight: 800, fontSize: '1.3rem' }}>{f.total} б.</div>
+                <div style={{ color: '#6b7280', fontSize: '0.8rem', marginTop: '4px' }}>🥇{f.gold} 🥈{f.silver} 🥉{f.bronze}</div>
               </div>
-              {!gaResult ? (
-                <div style={{ textAlign: 'center', padding: '40px' }}>
-                  <button style={labStyles.purpleBtn} onClick={runGA}>🧬 Запустити ГА</button>
-                </div>
-              ) : (
-                <>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '14px', marginBottom: '24px' }}>
-                    {gaResult.map((f, i) => (
-                      <div key={f.name} style={labStyles.gaCard(i === 0)}>
-                        <div style={{ fontSize: '1.8rem', marginBottom: '8px' }}>
-                          {(['🥇', '🥈', '🥉', '4️⃣', '5️⃣'] as const)[i] ?? `${i + 1}.`}
-                        </div>
-                        <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: '6px' }}>{f.name}</div>
-                        <div style={{ color: '#ec4899', fontWeight: 800, fontSize: '1.3rem' }}>{f.total} б.</div>
-                        <div style={{ color: '#6b7280', fontSize: '0.8rem', marginTop: '4px' }}>🥇{f.gold} 🥈{f.silver} 🥉{f.bronze}</div>
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '12px', padding: '16px 20px' }}>
-                    <b style={{ color: '#166534' }}>✅ Фінальна підмножина сформована!</b>
-                    <p style={{ color: '#166534', marginTop: '6px', marginBottom: 0, fontSize: '0.9rem' }}>
-                      ГА відібрав {gaResult.length} найкращих об&apos;єктів.
-                    </p>
-                  </div>
-                </>
-              )}
-            </div>
-            <div style={labStyles.card}>
-              <div style={labStyles.sectionTitle}>📉 Ілюстрація звуження підмножини</div>
-              <div style={{ display: 'flex', alignItems: 'center', overflowX: 'auto', padding: '10px 0', gap: '4px' }}>
-                <div style={{ textAlign: 'center', minWidth: '90px' }}>
-                  <div style={labStyles.flowCircle('#ec4899')}>{subset.length}</div>
-                  <div style={{ fontSize: '0.7rem', color: '#374151', fontWeight: 600 }}>🌸 Підмножина ЛР2</div>
-                </div>
-                {narrowingSteps.map((step, i) => {
-                  const h = heuristics.find(h => h.id === step.heurId)!;
-                  const colors = ['#f59e0b', '#8b5cf6', '#3b82f6', '#06b6d4', '#84cc16', '#f97316', '#14b8a6'];
-                  return (
-                    <React.Fragment key={step.heurId}>
-                      <div style={{ fontSize: '1.3rem', color: '#d1d5db', flexShrink: 0, marginBottom: '20px' }}>→</div>
-                      <div style={{ textAlign: 'center', minWidth: '90px' }}>
-                        <div style={{ fontSize: '0.65rem', color: '#ec4899', fontWeight: 700, marginBottom: '2px' }}>{h?.label}</div>
-                        <div style={labStyles.flowCircle(colors[i % colors.length])}>{step.result.length}</div>
-                        <div style={{ fontSize: '0.65rem', color: step.removedCount > 0 ? '#dc2626' : '#9ca3af' }}>
-                          {step.removedCount > 0 ? `−${step.removedCount}` : '–'}
-                        </div>
-                      </div>
-                    </React.Fragment>
-                  );
-                })}
-                <div style={{ fontSize: '1.3rem', color: '#d1d5db', flexShrink: 0, marginBottom: '20px' }}>→</div>
-                <div style={{ textAlign: 'center', minWidth: '90px' }}>
-                  <div style={labStyles.flowCircle('#10b981')}>{gaResult?.length ?? finalAfterHeuristics.length}</div>
-                  <div style={{ fontSize: '0.7rem', color: '#374151', fontWeight: 600 }}>🧬 Результат ГА</div>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
+            ))}
+          </div>
+          <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '12px', padding: '16px 20px' }}>
+            <b style={{ color: '#166534' }}>✅ Консенсусне ранжування сформовано!</b>
+            <p style={{ color: '#166534', marginTop: '6px', marginBottom: 0, fontSize: '0.9rem' }}>
+              ГА відібрав {gaResult.length} об&apos;єктів з мінімальною сумарною та мінімаксною відстанню від експертних ранжувань.
+            </p>
+          </div>
+        </>
+      )}
+    </div>
+
+    {/* ТАБЛИЦЯ ПОКОЛІНЬ */}
+    {gaLog.length > 0 && (
+      <div style={labStyles.card}>
+        <div style={labStyles.sectionTitle}>📈 Динаміка збіжності ГА</div>
+        <p style={{ color: '#6b7280', fontSize: '0.85rem', marginBottom: '16px' }}>
+          Функція придатності = 0.5 × Σ відстаней Кендалла + 0.5 × max відстань (менше — краще)
+        </p>
+        <div style={labStyles.tableWrapper}>
+          <table style={{ ...labStyles.table, borderSpacing: '0' }}>
+            <thead>
+              <tr style={{ background: '#fdfaf7' }}>
+                <th style={{ ...labStyles.thLeft, padding: '10px 14px', fontSize: '0.8rem' }}>Покоління</th>
+                <th style={{ ...labStyles.thCenter, padding: '10px 14px', fontSize: '0.8rem' }}>Найкраща f</th>
+                <th style={{ ...labStyles.thCenter, padding: '10px 14px', fontSize: '0.8rem' }}>Середня f</th>
+                <th style={{ ...labStyles.thCenter, padding: '10px 14px', fontSize: '0.8rem' }}>Найгірша f</th>
+                <th style={{ ...labStyles.thRight, padding: '10px 14px', fontSize: '0.8rem' }}>Топ-5 ранжування</th>
+              </tr>
+            </thead>
+            <tbody>
+              {gaLog.map((row, i) => {
+                const isFirst = i === 0;
+                const isLast = i === gaLog.length - 1;
+                const improved = i > 0 && row.bestFitness < gaLog[i - 1].bestFitness;
+                return (
+                  <tr key={row.generation} style={{
+                    background: isLast ? '#f0fdf4' : isFirst ? '#fdfaf7' : i % 2 === 0 ? '#ffffff' : '#fafafa',
+                  }}>
+                    <td style={{ padding: '8px 14px', fontSize: '0.82rem', fontWeight: isLast ? 700 : 400, color: isLast ? '#166534' : '#374151', borderBottom: '1px solid #ffe4e1' }}>
+                      {isLast ? '🏁 ' : ''}{row.generation}
+                    </td>
+                    <td style={{ padding: '8px 14px', fontSize: '0.82rem', textAlign: 'center' as const, fontWeight: 700, color: '#ec4899', borderBottom: '1px solid #ffe4e1' }}>
+                      {row.bestFitness}
+                      {improved && <span style={{ marginLeft: '4px', color: '#10b981', fontSize: '0.7rem' }}>↓</span>}
+                    </td>
+                    <td style={{ padding: '8px 14px', fontSize: '0.82rem', textAlign: 'center' as const, color: '#6b7280', borderBottom: '1px solid #ffe4e1' }}>
+                      {row.avgFitness}
+                    </td>
+                    <td style={{ padding: '8px 14px', fontSize: '0.82rem', textAlign: 'center' as const, color: '#9ca3af', borderBottom: '1px solid #ffe4e1' }}>
+                      {row.worstFitness}
+                    </td>
+                    <td style={{ padding: '8px 14px', fontSize: '0.75rem', color: '#374151', borderBottom: '1px solid #ffe4e1', maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
+                      {row.bestRanking}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )}
+  </>
+)}
       </main>
 
       {/* ════ BOTTOM BAR ════ */}
