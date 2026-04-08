@@ -1,4 +1,3 @@
-// lib/flowers.ts
 export interface Flower {
   id: string;
   name: string;
