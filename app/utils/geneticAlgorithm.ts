@@ -180,7 +180,7 @@ function mutateInsert(perm: number[], rate: number, rand: () => number): number[
   if (rand() > rate) return perm;
   const copy = [...perm];
   const n = copy.length;
-  let i = Math.floor(rand() * n);
+  const i = Math.floor(rand() * n);
   let j = Math.floor(rand() * n);
   while (j === i) j = Math.floor(rand() * n);
   const [el] = copy.splice(i, 1);
