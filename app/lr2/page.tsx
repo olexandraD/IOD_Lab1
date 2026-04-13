@@ -7,10 +7,10 @@ import { firebaseConfig } from './../config/firebaseConfig';
 import { labStyles } from './../constants/labStyles';
 import { heuristics } from './../data/heuristics';
 import {
-  runGeneticAlgorithm,
+  runDualCriteriaGA,
   applyHeuristicsSequentially,
   FlowerScore,
-  GenerationLog,
+  DualGAResult,
 } from './../utils/geneticAlgorithm';
 
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
@@ -41,10 +41,12 @@ export default function Lab2Page() {
   const [pass, setPass] = useState('');
   const [voteSent, setVoteSent] = useState(false);
   const [narrowStep, setNarrowStep] = useState(0);
-  const [gaResult, setGaResult] = useState<FlowerScore[] | null>(null);
-  const [gaLog, setGaLog] = useState<GenerationLog[]>([]);
   const [openStep, setOpenStep] = useState<number | null>(null);
-  const [openGaRow, setOpenGaRow] = useState<number | null>(null);
+
+  // ── GA state ──────────────────────────────────────────────────
+  const [gaResult, setGaResult] = useState<DualGAResult | null>(null);
+  const [gaRunning, setGaRunning] = useState(false);
+  // ─────────────────────────────────────────────────────────────
 
   useEffect(() => {
     onValue(ref(db, 'heuristicVotes'), (snap) => {
@@ -132,14 +134,18 @@ export default function Lab2Page() {
     }
   };
 
+  // ── GA launch ─────────────────────────────────────────────────
   const runGA = () => {
-    if (subset.length === 0) return alert("Немає даних з ЛР1!");
-    const { result, log } = runGeneticAlgorithm(subset, 10);
-    setGaResult(result);
-    setGaLog(log);
-    setOpenGaRow(null);
-    setView('algo');
+    if (subset.length === 0) return alert('Немає даних з ЛР1!');
+    setGaRunning(true);
+    setTimeout(() => {
+      const result = runDualCriteriaGA(subset);
+      setGaResult(result);
+      setGaRunning(false);
+      setView('algo');
+    }, 50);
   };
+  // ─────────────────────────────────────────────────────────────
 
   return (
     <div style={labStyles.mainContainer}>
@@ -549,7 +555,13 @@ export default function Lab2Page() {
                 })}
               </div>
               <div style={{ textAlign: 'center' }}>
-                <button style={labStyles.purpleBtn} onClick={runGA}>🧬 Запустити генетичний алгоритм</button>
+                <button
+                  style={{ ...labStyles.purpleBtn, opacity: gaRunning ? 0.7 : 1, cursor: gaRunning ? 'not-allowed' : 'pointer' }}
+                  onClick={runGA}
+                  disabled={gaRunning}
+                >
+                  🧬 {gaRunning ? 'Виконується...' : 'Запустити генетичний алгоритм'}
+                </button>
               </div>
             </div>
           </>
@@ -558,129 +570,203 @@ export default function Lab2Page() {
         {/* ════ ALGO ════ */}
         {view === 'algo' && (
           <>
-            <h1 style={labStyles.voteTitle}>🧬 Генетичний Алгоритм — Фінальне ранжування</h1>
+            <h1 style={labStyles.voteTitle}>🧬 Генетичний алгоритм (Двокритеріальний пошук)</h1>
 
+            {/* Description + launch */}
             <div style={labStyles.card}>
-              <div style={labStyles.sectionTitle}>ℹ️ Опис алгоритму</div>
-              <p style={{ color: '#374151', lineHeight: '1.8', marginBottom: 0, fontSize: '0.95rem' }}>
-                ГА отримує підмножину квіток і знаходить їх оптимальне <b>консенсусне ранжування</b> —
-                порядок, який найкраще узгоджується з усіма голосами експертів з ЛР1.<br /><br />
-                <b>Вхід:</b> підмножина об&apos;єктів · <b>Вихід:</b> ранжування топ-10<br />
-                <b>Популяція:</b> 40 особин · <b>Поколінь:</b> 150 · <b>Мутація:</b> 15% · <b>Еліта:</b> 8<br />
-                <b>Функція придатності:</b> 0.5 × сума відстаней Кендалла + 0.5 × максимальна відстань<br />
-                <b>Кросинговер OX:</b> з двох батьківських ранжувань береться відрізок одного і доповнюється елементами іншого, зберігаючи порядок.<br />
-                <b>Swap-мутація:</b> два випадкових об&apos;єкти міняються місцями у ранжуванні.<br />
-                <b>Елітарний відбір:</b> 8 найкращих особин кожного покоління переходять у наступне без змін.
+              <p style={{ color: '#374151', lineHeight: '1.8', fontSize: '0.95rem', marginBottom: '20px' }}>
+                Виконуємо дві незалежні еволюції: для мінімізації суми відстаней (К1) та для мінімізації максимуму (К2).
               </p>
+              <p style={{ color: '#6b7280', fontSize: '0.85rem', marginBottom: '24px', lineHeight: '1.6' }}>
+                <b>Вхід:</b> 20 випадково згенерованих повних перестановок 10 об&apos;єктів (seed=42).<br />
+                <b>Відстань:</b> Хемінг — кількість позицій, де перестановки різняться.<br />
+                <b>К1</b> — мінімізувати суму відстаней Хемінга від 20 перестановок до знайденого ранжування.<br />
+                <b>К2</b> — мінімізувати максимум відстані (найгірший з 20 варіантів).<br />
+                <b>Популяція:</b> 80 · <b>Поколінь:</b> 200 · <b>Мутація:</b> 10% · <b>Еліта:</b> 10<br />
+                <b>Кросинговер OX:</b> відрізок від першого батька, решта — з другого в порядку. <b>Swap-мутація:</b> два випадкових елементи міняються місцями.
+              </p>
+              <div style={{ textAlign: 'center' as const }}>
+                <button
+                  style={{
+                    ...labStyles.purpleBtn,
+                    opacity: gaRunning ? 0.7 : 1,
+                    cursor: gaRunning ? 'not-allowed' : 'pointer',
+                    fontSize: '1.05rem',
+                    padding: '16px 48px',
+                    width: '100%',
+                    maxWidth: '520px',
+                  }}
+                  onClick={runGA}
+                  disabled={gaRunning}
+                >
+                  🚀 {gaRunning ? 'Виконується...' : 'ЗАПУСТИТИ НЕЗАЛЕЖНІ ЕВОЛЮЦІЇ'}
+                </button>
+              </div>
             </div>
 
-            <div style={labStyles.card}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap' as const, gap: '12px' }}>
-                <div style={labStyles.sectionTitle}>🏆 Результат ГА</div>
-                <button style={labStyles.accentBtn} onClick={runGA}>▶ Перезапустити ГА</button>
-              </div>
-              {!gaResult ? (
-                <div style={{ textAlign: 'center', padding: '40px' }}>
-                  <button style={labStyles.purpleBtn} onClick={runGA}>🧬 Запустити ГА</button>
+            {/* Results */}
+            {gaResult && (
+              <>
+                {/* 8 summary metrics */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px', marginBottom: '24px' }}>
+                  {[
+                    { label: 'Мінімум суми (К1)', value: gaResult.k1BestSum, color: '#7c3aed', bg: '#fdf4ff', border: '#d8b4fe' },
+                    { label: 'Макс. при К1', value: gaResult.k1BestMax, color: '#9333ea', bg: '#faf5ff', border: '#e9d5ff' },
+                    { label: 'Покращень К1', value: gaResult.k1FoundCount, color: '#6d28d9', bg: '#f5f3ff', border: '#ddd6fe' },
+                    { label: 'Розв\'язків К1', value: gaResult.k1SolCount, color: '#7c3aed', bg: '#fdf4ff', border: '#d8b4fe' },
+                    { label: 'Мінімум макс. (К2)', value: gaResult.k2BestMax, color: '#15803d', bg: '#f0fdf4', border: '#86efac' },
+                    { label: 'Сума при К2', value: gaResult.k2BestSum, color: '#16a34a', bg: '#f0fdf4', border: '#86efac' },
+                    { label: 'Покращень К2', value: gaResult.k2FoundCount, color: '#15803d', bg: '#f0fdf4', border: '#86efac' },
+                    { label: 'Розв\'язків К2', value: gaResult.k2SolCount, color: '#15803d', bg: '#f0fdf4', border: '#86efac' },
+                  ].map(m => (
+                    <div key={m.label} style={{ background: m.bg, border: `1px solid ${m.border}`, borderRadius: '12px', padding: '14px 10px', textAlign: 'center' as const }}>
+                      <div style={{ fontSize: '0.7rem', color: m.color, fontWeight: 700, marginBottom: '4px', lineHeight: 1.3 }}>{m.label}</div>
+                      <div style={{ fontSize: '1.6rem', fontWeight: 800, color: m.color }}>{m.value}</div>
+                    </div>
+                  ))}
                 </div>
-              ) : (
-                <>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '14px', marginBottom: '24px' }}>
-                    {gaResult.map((f, i) => (
-                      <div key={f.name} style={labStyles.gaCard(i === 0)}>
-                        <div style={{ fontSize: '1.8rem', marginBottom: '8px' }}>
-                          {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}
-                        </div>
-                        <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: '6px' }}>{f.name}</div>
-                        <div style={{ color: '#ec4899', fontWeight: 800, fontSize: '1.3rem' }}>{f.total} б.</div>
-                        <div style={{ color: '#6b7280', fontSize: '0.8rem', marginTop: '4px' }}>🥇{f.gold} 🥈{f.silver} 🥉{f.bronze}</div>
+
+                {/* Best rankings side by side */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+                  {[
+                    { title: 'Ранжування К1 (мін. сума)', ranking: gaResult.k1Ranking, color: '#7c3aed', bg: '#fdf4ff', border: '#d8b4fe' },
+                    { title: 'Ранжування К2 (мін. макс.)', ranking: gaResult.k2Ranking, color: '#15803d', bg: '#f0fdf4', border: '#86efac' },
+                  ].map(r => (
+                    <div key={r.title} style={{ background: r.bg, border: `1px solid ${r.border}`, borderRadius: '14px', padding: '16px' }}>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 700, color: r.color, marginBottom: '10px' }}>{r.title}</div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '4px' }}>
+                        {r.ranking.map((name, i) => (
+                          <span key={name} style={{
+                            background: i === 0 ? r.color : 'white',
+                            color: i === 0 ? 'white' : r.color,
+                            border: `1px solid ${r.border}`,
+                            borderRadius: '6px',
+                            padding: '3px 10px',
+                            fontSize: '0.8rem',
+                            fontWeight: 600,
+                          }}>
+                            {i + 1}. {name}
+                          </span>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-
-            {gaLog.length > 0 && (
-              <div style={labStyles.card}>
-                <div style={labStyles.sectionTitle}>📈 Динаміка збіжності ГА</div>
-                <div style={labStyles.tableWrapper}>
-                  <table style={{ ...labStyles.table, borderSpacing: '0' }}>
-                    <thead>
-                      <tr style={{ background: '#fdfaf7' }}>
-                        <th style={{ ...labStyles.thLeft, padding: '10px 14px', fontSize: '0.8rem' }}>Покоління</th>
-                        <th style={{ ...labStyles.thCenter, padding: '10px 14px', fontSize: '0.8rem', color: '#ec4899' }}>Найкраща f ↓</th>
-                        <th style={{ ...labStyles.thCenter, padding: '10px 14px', fontSize: '0.8rem' }}>Середня f</th>
-                        <th style={{ ...labStyles.thCenter, padding: '10px 14px', fontSize: '0.8rem' }}>Найгірша f</th>
-                        <th style={{ ...labStyles.thRight, padding: '10px 14px', fontSize: '0.8rem' }}>Деталі</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {gaLog.map((row, i) => {
-                        const isLast = i === gaLog.length - 1;
-                        const improved = i > 0 && row.bestFitness < gaLog[i - 1].bestFitness;
-                        const isOpen = openGaRow === i;
-                        const ranking = row.bestRanking.split(' > ');
-                        return (
-                          <React.Fragment key={row.generation}>
-                            <tr
-                              onClick={() => setOpenGaRow(isOpen ? null : i)}
-                              style={{
-                                background: isLast ? '#f0fdf4' : i % 2 === 0 ? '#ffffff' : '#fafafa',
-                                cursor: 'pointer',
-                              }}
-                            >
-                              <td style={{ padding: '8px 14px', fontSize: '0.82rem', fontWeight: isLast ? 700 : 400, color: isLast ? '#166534' : '#374151', borderBottom: '1px solid #ffe4e1' }}>
-                                {isLast ? '🏁 ' : ''}{row.generation}
-                                {isLast && <span style={{ fontSize: '0.7rem', marginLeft: '6px', color: '#10b981' }}>фінал</span>}
-                              </td>
-                              <td style={{ padding: '8px 14px', fontSize: '0.82rem', textAlign: 'center' as const, fontWeight: 700, color: '#ec4899', borderBottom: '1px solid #ffe4e1' }}>
-                                {row.bestFitness}
-                                {improved && <span style={{ marginLeft: '4px', color: '#10b981', fontSize: '0.7rem' }}>↓</span>}
-                              </td>
-                              <td style={{ padding: '8px 14px', fontSize: '0.82rem', textAlign: 'center' as const, color: '#6b7280', borderBottom: '1px solid #ffe4e1' }}>
-                                {row.avgFitness}
-                              </td>
-                              <td style={{ padding: '8px 14px', fontSize: '0.82rem', textAlign: 'center' as const, color: '#9ca3af', borderBottom: '1px solid #ffe4e1' }}>
-                                {row.worstFitness}
-                              </td>
-                              <td style={{ padding: '8px 14px', fontSize: '0.75rem', textAlign: 'center' as const, color: '#9ca3af', borderBottom: '1px solid #ffe4e1' }}>
-                                {isOpen ? '▲' : '▼'}
-                              </td>
-                            </tr>
-                            {isOpen && (
-                              <tr style={{ background: isLast ? '#f0fdf4' : '#fdfaf7' }}>
-                                <td colSpan={5} style={{ padding: '10px 14px 14px', borderBottom: '1px solid #ffe4e1' }}>
-                                  <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '8px', fontWeight: 600 }}>
-                                    Найкраще ранжування покоління {row.generation}:
-                                  </div>
-                                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '4px' }}>
-                                    {ranking.map((name, idx) => (
-                                      <div key={name} style={{
-                                        display: 'flex', alignItems: 'center', gap: '8px',
-                                        padding: '5px 10px', borderRadius: '8px',
-                                        background: idx === 0 ? '#fff0f7' : idx === 1 ? '#fdf4ff' : '#fafafa',
-                                        border: `1px solid ${idx === 0 ? '#ec4899' : idx === 1 ? '#e9d5ff' : '#ffe4e1'}`,
-                                      }}>
-                                        <span style={{ fontWeight: 700, color: idx === 0 ? '#ec4899' : idx < 3 ? '#8b5cf6' : '#9ca3af', minWidth: '20px', fontSize: '0.8rem' }}>
-                                          {idx + 1}.
-                                        </span>
-                                        <span style={{ fontSize: '0.82rem', fontWeight: idx < 3 ? 600 : 400, color: '#1f2937' }}>
-                                          {name}
-                                        </span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </td>
-                              </tr>
-                            )}
-                          </React.Fragment>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                    </div>
+                  ))}
                 </div>
-              </div>
+
+                {/* Improvement history table */}
+                <div style={labStyles.card}>
+                  <div style={labStyles.sectionTitle}>Знайдені незалежні розв&apos;язки:</div>
+                  <div style={{ overflowX: 'auto' as const }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontSize: '0.84rem' }}>
+                      <thead>
+                        <tr style={{ background: '#1e1b4b' }}>
+                          <th style={{ padding: '12px 10px', color: '#e0e7ff', fontWeight: 700, textAlign: 'center' as const, width: '36px', borderRight: '1px solid #3730a3' }}>
+                            #
+                          </th>
+                          <th style={{ padding: '12px 14px', textAlign: 'left' as const, borderRight: '1px solid #3730a3' }}>
+                            <span style={{ color: '#a78bfa', fontWeight: 700 }}>Колонка 1: Оптимальні за К1</span><br />
+                            <span style={{ color: '#c4b5fd', fontWeight: 400, fontSize: '0.77rem' }}>(Мінімізована сума відстаней)</span>
+                          </th>
+                          <th style={{ padding: '12px 14px', textAlign: 'left' as const }}>
+                            <span style={{ color: '#6ee7b7', fontWeight: 700 }}>Колонка 2: Оптимальні за К2</span><br />
+                            <span style={{ color: '#a7f3d0', fontWeight: 400, fontSize: '0.77rem' }}>(Мінімізований максимум)</span>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {gaResult.solutions.map((row, i) => (
+                          <tr key={i} style={{ background: i % 2 === 0 ? '#fdfaf7' : '#ffffff', borderBottom: '1px solid #ffe4e1' }}>
+                            {/* # */}
+                            <td style={{ padding: '14px 10px', textAlign: 'center' as const, fontWeight: 700, color: '#374151', borderRight: '1px solid #e5e7eb', verticalAlign: 'top' as const }}>
+                              {row.rowIndex}
+                            </td>
+                            {/* K1 */}
+                            <td style={{ padding: '14px 16px', borderRight: '1px solid #e5e7eb', verticalAlign: 'top' as const }}>
+                              {row.k1Ranking ? (
+                                <>
+                                  <div style={{ color: '#374151', marginBottom: '6px', lineHeight: 1.6 }}>
+                                    [{row.k1Ranking.join(', ')}]
+                                  </div>
+                                  <div style={{ color: '#7c3aed', fontWeight: 700 }}>
+                                    Мінімум Суми (К1): {row.k1SumValue}
+                                  </div>
+                                  <div style={{ color: '#9ca3af', fontSize: '0.77rem' }}>
+                                    (Знайдено в пок. {row.k1FoundGen})
+                                  </div>
+                                  <div style={{ color: '#9ca3af', fontSize: '0.77rem' }}>
+                                    (При цьому Максимум К2 = {row.k1MaxAtK1})
+                                  </div>
+                                </>
+                              ) : (
+                                <span style={{ color: '#d1d5db', fontSize: '1.2rem' }}>—</span>
+                              )}
+                            </td>
+                            {/* K2 */}
+                            <td style={{ padding: '14px 16px', verticalAlign: 'top' as const }}>
+                              {row.k2Ranking ? (
+                                <>
+                                  <div style={{ color: '#374151', marginBottom: '6px', lineHeight: 1.6 }}>
+                                    [{row.k2Ranking.join(', ')}]
+                                  </div>
+                                  <div style={{ color: '#15803d', fontWeight: 700 }}>
+                                    Мінімум Максимуму (К2): {row.k2MaxValue}
+                                  </div>
+                                  <div style={{ color: '#9ca3af', fontSize: '0.77rem' }}>
+                                    (Знайдено в пок. {row.k2FoundGen})
+                                  </div>
+                                  <div style={{ color: '#9ca3af', fontSize: '0.77rem' }}>
+                                    (При цьому Сума К1 = {row.k2SumAtK2})
+                                  </div>
+                                </>
+                              ) : (
+                                <span style={{ color: '#d1d5db', fontSize: '1.2rem' }}>—</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Comparison table */}
+                <div style={labStyles.card}>
+                  <div style={labStyles.sectionTitle}>📊 Порівняння двох критеріїв</div>
+                  <div style={{ overflowX: 'auto' as const }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontSize: '0.88rem' }}>
+                      <thead>
+                        <tr style={{ background: '#fdfaf7' }}>
+                          {['Критерій', 'Ранжування К1', 'Ранжування К2'].map(h => (
+                            <th key={h} style={{ padding: '12px 16px', textAlign: h === 'Критерій' ? 'left' as const : 'center' as const, fontWeight: 700, color: '#374151', borderBottom: '2px solid #ffe4e1' }}>
+                              {h}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[
+                          { label: 'Сума відстаней (К1)', v1: gaResult.k1BestSum, v2: gaResult.k2BestSum },
+                          { label: 'Максимум відстані (К2)', v1: gaResult.k1BestMax, v2: gaResult.k2BestMax },
+                          { label: 'Знайдено покращень', v1: gaResult.k1FoundCount, v2: gaResult.k2FoundCount },
+                          { label: 'Кількість розв\'язків', v1: gaResult.k1SolCount, v2: gaResult.k2SolCount },
+                        ].map((row, i) => (
+                          <tr key={row.label} style={{ background: i % 2 === 0 ? '#fff' : '#fdfaf7' }}>
+                            <td style={{ padding: '12px 16px', color: '#374151', fontWeight: 600, borderBottom: '1px solid #ffe4e1' }}>
+                              {row.label}
+                            </td>
+                            <td style={{ padding: '12px 16px', textAlign: 'center' as const, color: '#7c3aed', fontWeight: 700, borderBottom: '1px solid #ffe4e1' }}>
+                              {row.v1}
+                            </td>
+                            <td style={{ padding: '12px 16px', textAlign: 'center' as const, color: '#15803d', fontWeight: 700, borderBottom: '1px solid #ffe4e1' }}>
+                              {row.v2}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </>
             )}
           </>
         )}
