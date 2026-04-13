@@ -135,9 +135,12 @@ export default function Lab2Page() {
   };
 
   // ── GA launch ─────────────────────────────────────────────────
+  // Runs two INDEPENDENT evolutions: K1 (min sum Hamming) and K2 (min max Hamming)
+  // Each evolution records every generation where a strictly better solution was found
   const runGA = () => {
     if (subset.length === 0) return alert('Немає даних з ЛР1!');
     setGaRunning(true);
+    setGaResult(null);
     setTimeout(() => {
       const result = runDualCriteriaGA(subset);
       setGaResult(result);
@@ -578,7 +581,7 @@ export default function Lab2Page() {
                 Виконуємо дві незалежні еволюції: для мінімізації суми відстаней (К1) та для мінімізації максимуму (К2).
               </p>
               <p style={{ color: '#6b7280', fontSize: '0.85rem', marginBottom: '24px', lineHeight: '1.6' }}>
-                <b>Вхід:</b> 20 випадково згенерованих повних перестановок 10 об&apos;єктів (seed=42).<br />
+                <b>Вхід:</b> 20 випадково згенерованих повних перестановок об&apos;єктів (seed=42).<br />
                 <b>Відстань:</b> Хемінг — кількість позицій, де перестановки різняться.<br />
                 <b>К1</b> — мінімізувати суму відстаней Хемінга від 20 перестановок до знайденого ранжування.<br />
                 <b>К2</b> — мінімізувати максимум відстані (найгірший з 20 варіантів).<br />
@@ -653,7 +656,7 @@ export default function Lab2Page() {
                   ))}
                 </div>
 
-                {/* Improvement history table */}
+                {/* Improvement history table — matches screenshot layout */}
                 <div style={labStyles.card}>
                   <div style={labStyles.sectionTitle}>Знайдені незалежні розв&apos;язки:</div>
                   <div style={{ overflowX: 'auto' as const }}>
@@ -680,7 +683,7 @@ export default function Lab2Page() {
                             <td style={{ padding: '14px 10px', textAlign: 'center' as const, fontWeight: 700, color: '#374151', borderRight: '1px solid #e5e7eb', verticalAlign: 'top' as const }}>
                               {row.rowIndex}
                             </td>
-                            {/* K1 */}
+                            {/* K1 column */}
                             <td style={{ padding: '14px 16px', borderRight: '1px solid #e5e7eb', verticalAlign: 'top' as const }}>
                               {row.k1Ranking ? (
                                 <>
@@ -698,10 +701,10 @@ export default function Lab2Page() {
                                   </div>
                                 </>
                               ) : (
-                                <span style={{ color: '#d1d5db', fontSize: '1.2rem' }}>—</span>
+                                <span style={{ color: '#d1d5db', fontSize: '1.4rem' }}>—</span>
                               )}
                             </td>
-                            {/* K2 */}
+                            {/* K2 column */}
                             <td style={{ padding: '14px 16px', verticalAlign: 'top' as const }}>
                               {row.k2Ranking ? (
                                 <>
@@ -719,7 +722,7 @@ export default function Lab2Page() {
                                   </div>
                                 </>
                               ) : (
-                                <span style={{ color: '#d1d5db', fontSize: '1.2rem' }}>—</span>
+                                <span style={{ color: '#d1d5db', fontSize: '1.4rem' }}>—</span>
                               )}
                             </td>
                           </tr>
