@@ -1,12 +1,3 @@
-// ================================================================
-// Genetic Algorithm for consensus ranking
-// Distance metric: Hamming (number of positions that differ)
-// Input: 20 randomly generated permutations of the candidate set
-// Two criteria:
-//   K1 — minimise SUM of Hamming distances to all 20 permutations
-//   K2 — minimise MAX Hamming distance (worst-case among 20)
-// ================================================================
-
 export interface FlowerScore {
   name: string;
   gold: number;
