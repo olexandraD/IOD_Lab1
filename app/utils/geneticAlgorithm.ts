@@ -1,3 +1,12 @@
+// ================================================================
+// Genetic Algorithm for consensus ranking
+// Distance metric: Hamming (number of positions that differ)
+// Input: 20 randomly generated permutations of the candidate set
+// Two criteria:
+//   K1 — minimise SUM of Hamming distances to all 20 permutations
+//   K2 — minimise MAX Hamming distance (worst-case among 20)
+// ================================================================
+
 export interface FlowerScore {
   name: string;
   gold: number;
@@ -15,6 +24,41 @@ export interface GenerationLog {
   bestRanking: string;
 }
 
+// One row in the dual-criteria results table
+export interface DualSolution {
+  rowIndex: number;
+  // K1 side — minimise sum of Hamming distances
+  k1Ranking: string[] | null;
+  k1SumValue: number | null;
+  k1MaxAtK1: number | null;   // max Hamming dist at this K1 solution
+  k1FoundGen: number | null;
+  // K2 side — minimise max Hamming distance
+  k2Ranking: string[] | null;
+  k2MaxValue: number | null;
+  k2SumAtK2: number | null;   // sum Hamming dist at this K2 solution
+  k2FoundGen: number | null;
+}
+
+export interface DualGAResult {
+  solutions: DualSolution[];
+  // K1 final best
+  k1BestSum: number;
+  k1BestMax: number;
+  k1Ranking: string[];
+  k1FoundCount: number;   // how many times improvement was found
+  k1SolCount: number;     // solutions with this value in final population
+  // K2 final best
+  k2BestMax: number;
+  k2BestSum: number;
+  k2Ranking: string[];
+  k2FoundCount: number;
+  k2SolCount: number;
+}
+
+// ----------------------------------------------------------------
+// Heuristics — UNCHANGED from original project
+// ----------------------------------------------------------------
+
 export const HEURISTIC_RULES: Record<string, (f: FlowerScore) => boolean> = {
   e1: (f) => f.gold === 0 && f.silver === 0 && f.bronze === 1,
   e2: (f) => f.gold === 0 && f.silver === 1 && f.bronze === 0,
@@ -25,16 +69,6 @@ export const HEURISTIC_RULES: Record<string, (f: FlowerScore) => boolean> = {
   e7: (f) => f.silver > f.gold,
 };
 
-export const HEURISTIC_EXPLANATIONS: Record<string, string> = {
-  e1: "Участь в одному множинному порівнянні на 3 місці (bronze=1, gold=0, silver=0).",
-  e2: "Участь в одному множинному порівнянні на 2 місці (silver=1, gold=0, bronze=0).",
-  e3: "Участь в одному множинному порівнянні на 1 місці (gold=1, silver=0, bronze=0).",
-  e4: "Участь в 2х множинних порівняннях на 3 місці (bronze=2, gold=0, silver=0).",
-  e5: "Участь в одному на 3 місці та ще в одному на 2 місці (gold=0, silver=1, bronze=1).",
-  e6: "Власна: жодного разу не обраний вище 3-го місця (silver=0, gold=0, bronze>=1).",
-  e7: "Власна: кількість 2-х місць перевищує кількість 1-х (silver > gold).",
-};
-
 export function applyHeuristic(
   scores: FlowerScore[],
   heurId: string
@@ -42,8 +76,8 @@ export function applyHeuristic(
   const rule = HEURISTIC_RULES[heurId];
   if (!rule) return { kept: scores, removed: [] };
   return {
-    kept:    scores.filter(f => !rule(f)),
-    removed: scores.filter(f =>  rule(f)),
+    kept: scores.filter(f => !rule(f)),
+    removed: scores.filter(f => rule(f)),
   };
 }
 
@@ -72,95 +106,92 @@ export function applyHeuristicsSequentially(
   return steps;
 }
 
-type Permutation = number[];
-
-function kendallDistance(a: number[], b: number[]): number {
-  const posB: Record<number, number> = {};
-  b.forEach((el, idx) => { posB[el] = idx; });
+// ----------------------------------------------------------------
+// Hamming distance — counts positions where two arrays differ
+// ----------------------------------------------------------------
+function hammingDistance(a: number[], b: number[]): number {
   let dist = 0;
   for (let i = 0; i < a.length; i++) {
-    for (let j = i + 1; j < a.length; j++) {
-      const ai = a[i], aj = a[j];
-      if (posB[ai] === undefined || posB[aj] === undefined) continue;
-      if (posB[ai] > posB[aj]) dist++;
-    }
+    if (a[i] !== b[i]) dist++;
   }
   return dist;
 }
 
-function buildExpertRankings(candidates: FlowerScore[]): number[][] {
-  const expertRankings: number[][] = [];
-  const indices = candidates.map((_, i) => i);
+// ----------------------------------------------------------------
+// Seeded random number generator (LCG) for reproducible permutations
+// ----------------------------------------------------------------
+function makeLCG(seed: number) {
+  let s = seed >>> 0;
+  return () => {
+    s = (Math.imul(1664525, s) + 1013904223) >>> 0;
+    return s / 0x100000000;
+  };
+}
 
-  candidates.forEach((flower, idx) => {
-    for (let g = 0; g < flower.gold; g++) {
-      const ranking = [idx, ...indices.filter(i => i !== idx)
-        .sort((a, b) => candidates[b].total - candidates[a].total)];
-      expertRankings.push(ranking);
+// Generate `count` random permutations of [0..n-1] with a fixed seed
+export function generateRandomPerms(n: number, count: number, seed = 42): number[][] {
+  const rand = makeLCG(seed);
+  const perms: number[][] = [];
+  for (let k = 0; k < count; k++) {
+    const arr = Array.from({ length: n }, (_, i) => i);
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(rand() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
     }
-    for (let s = 0; s < flower.silver; s++) {
-      const rest = indices.filter(i => i !== idx)
-        .sort((a, b) => candidates[b].total - candidates[a].total);
-      const top1 = rest[0];
-      const others = rest.slice(1);
-      expertRankings.push([top1, idx, ...others]);
-    }
-    for (let b2 = 0; b2 < flower.bronze; b2++) {
-      const rest = indices.filter(i => i !== idx)
-        .sort((a, b) => candidates[b].total - candidates[a].total);
-      const top2 = rest.slice(0, 2);
-      const others = rest.slice(2);
-      expertRankings.push([...top2, idx, ...others]);
-    }
-  });
-
-  if (expertRankings.length === 0) {
-    expertRankings.push([...indices]);
+    perms.push(arr);
   }
-
-  return expertRankings;
+  return perms;
 }
 
-function gaFitness(
-  perm: Permutation,
-  expertRankings: number[][],
-  w1 = 0.5,
-  w2 = 0.5
-): number {
-  let sumDist = 0;
-  let maxDist = 0;
-  for (const exp of expertRankings) {
-    const d = kendallDistance(perm, exp);
-    sumDist += d;
-    if (d > maxDist) maxDist = d;
+// ----------------------------------------------------------------
+// Fitness functions
+// ----------------------------------------------------------------
+function fitnessSum(perm: number[], expertPerms: number[][]): number {
+  let sum = 0;
+  for (const ep of expertPerms) sum += hammingDistance(perm, ep);
+  return sum;
+}
+
+function fitnessMax(perm: number[], expertPerms: number[][]): number {
+  let max = 0;
+  for (const ep of expertPerms) {
+    const d = hammingDistance(perm, ep);
+    if (d > max) max = d;
   }
-  return w1 * sumDist + w2 * maxDist;
+  return max;
 }
 
-function randomPerm(n: number): Permutation {
-  return [...Array(n).keys()].sort(() => Math.random() - 0.5);
+// ----------------------------------------------------------------
+// GA operators
+// ----------------------------------------------------------------
+function randomPerm(n: number): number[] {
+  return Array.from({ length: n }, (_, i) => i).sort(() => Math.random() - 0.5);
 }
 
-function crossoverOX(a: Permutation, b: Permutation): Permutation {
+// Order crossover OX1
+function crossoverOX(a: number[], b: number[]): number[] {
   const n = a.length;
-  const [p1, p2] = [
-    Math.floor(Math.random() * n),
-    Math.floor(Math.random() * n),
-  ].sort((x, y) => x - y);
+  let p1 = Math.floor(Math.random() * n);
+  let p2 = Math.floor(Math.random() * n);
+  if (p1 > p2) [p1, p2] = [p2, p1];
 
   const child = new Array(n).fill(-1);
   for (let i = p1; i <= p2; i++) child[i] = a[i];
 
+  const inChild = new Set(child.filter(x => x !== -1));
   let bIdx = 0;
   for (let i = 0; i < n; i++) {
     if (child[i] !== -1) continue;
-    while (child.includes(b[bIdx])) bIdx++;
-    child[i] = b[bIdx++];
+    while (inChild.has(b[bIdx])) bIdx++;
+    child[i] = b[bIdx];
+    inChild.add(b[bIdx]);
+    bIdx++;
   }
   return child;
 }
 
-function mutateSwap(perm: Permutation, rate: number): Permutation {
+// Swap mutation
+function mutateSwap(perm: number[], rate: number): number[] {
   if (Math.random() > rate) return perm;
   const copy = [...perm];
   const i = Math.floor(Math.random() * copy.length);
@@ -169,27 +200,140 @@ function mutateSwap(perm: Permutation, rate: number): Permutation {
   return copy;
 }
 
+// ----------------------------------------------------------------
+// Single independent GA run
+// Records every generation where a new best was found
+// ----------------------------------------------------------------
+interface SingleGAResult {
+  bestPerm: number[];
+  bestVal: number;
+  improvements: Array<{ gen: number; perm: number[]; val: number }>;
+  solCount: number;
+}
+
+function runSingleGA(
+  n: number,
+  expertPerms: number[][],
+  fitFn: (p: number[], e: number[][]) => number,
+  popSize = 80,
+  generations = 200,
+  mutRate = 0.10,
+  eliteCount = 10
+): SingleGAResult {
+  let pop: number[][] = Array.from({ length: popSize }, () => randomPerm(n));
+
+  let bestVal = Infinity;
+  let bestPerm: number[] = [];
+  const improvements: Array<{ gen: number; perm: number[]; val: number }> = [];
+
+  for (let g = 0; g < generations; g++) {
+    // Sort by fitness
+    pop.sort((a, b) => fitFn(a, expertPerms) - fitFn(b, expertPerms));
+
+    const curBest = fitFn(pop[0], expertPerms);
+    if (curBest < bestVal) {
+      bestVal = curBest;
+      bestPerm = [...pop[0]];
+      improvements.push({ gen: g + 1, perm: [...pop[0]], val: curBest });
+    }
+
+    // Next generation: elite + offspring
+    const elite = pop.slice(0, eliteCount);
+    const children: number[][] = [];
+    while (children.length < popSize - eliteCount) {
+      const pa = elite[Math.floor(Math.random() * elite.length)];
+      const pb = elite[Math.floor(Math.random() * elite.length)];
+      children.push(mutateSwap(crossoverOX(pa, pb), mutRate));
+    }
+    pop = [...elite, ...children];
+  }
+
+  // Count how many in final pop share the best value
+  const solCount = pop.filter(p => fitFn(p, expertPerms) === bestVal).length;
+
+  return { bestPerm, bestVal, improvements, solCount };
+}
+
+// ----------------------------------------------------------------
+// Main export: dual-criteria GA
+// ----------------------------------------------------------------
+export function runDualCriteriaGA(
+  candidates: FlowerScore[],
+  targetSize = 10,
+  nExperts = 20,
+  seed = 42
+): DualGAResult {
+  // Top-N candidates by total score
+  const pool = [...candidates]
+    .sort((a, b) => b.total - a.total)
+    .slice(0, targetSize);
+
+  const n = pool.length;
+
+  // 20 random permutations — same seed every run for reproducibility
+  const expertPerms = generateRandomPerms(n, nExperts, seed);
+
+  // K1: minimise sum of Hamming distances
+  const r1 = runSingleGA(n, expertPerms, fitnessSum);
+
+  // K2: minimise max Hamming distance
+  const r2 = runSingleGA(n, expertPerms, fitnessMax);
+
+  // Build table — one row per improvement (aligned by index)
+  const maxRows = Math.max(r1.improvements.length, r2.improvements.length);
+  const solutions: DualSolution[] = [];
+
+  for (let i = 0; i < maxRows; i++) {
+    const imp1 = r1.improvements[i] ?? null;
+    const imp2 = r2.improvements[i] ?? null;
+
+    solutions.push({
+      rowIndex: i + 1,
+      k1Ranking: imp1 ? imp1.perm.map(idx => pool[idx].name) : null,
+      k1SumValue: imp1 ? imp1.val : null,
+      k1MaxAtK1: imp1 ? fitnessMax(imp1.perm, expertPerms) : null,
+      k1FoundGen: imp1 ? imp1.gen : null,
+      k2Ranking: imp2 ? imp2.perm.map(idx => pool[idx].name) : null,
+      k2MaxValue: imp2 ? imp2.val : null,
+      k2SumAtK2: imp2 ? fitnessSum(imp2.perm, expertPerms) : null,
+      k2FoundGen: imp2 ? imp2.gen : null,
+    });
+  }
+
+  return {
+    solutions,
+    k1BestSum: r1.bestVal,
+    k1BestMax: fitnessMax(r1.bestPerm, expertPerms),
+    k1Ranking: r1.bestPerm.map(idx => pool[idx].name),
+    k1FoundCount: r1.improvements.length,
+    k1SolCount: r1.solCount,
+    k2BestMax: r2.bestVal,
+    k2BestSum: fitnessSum(r2.bestPerm, expertPerms),
+    k2Ranking: r2.bestPerm.map(idx => pool[idx].name),
+    k2FoundCount: r2.improvements.length,
+    k2SolCount: r2.solCount,
+  };
+}
+
+// ----------------------------------------------------------------
+// Legacy export — kept so nothing else in the project breaks
+// ----------------------------------------------------------------
 export function runGeneticAlgorithm(
   candidates: FlowerScore[],
   targetSize = 10,
   opts = { popSize: 40, generations: 150, mutationRate: 0.15, eliteCount: 8 }
 ): { result: FlowerScore[]; log: GenerationLog[] } {
-  if (candidates.length <= targetSize) {
-    return {
-      result: [...candidates].sort((a, b) => b.total - a.total),
-      log: [],
-    };
-  }
-
   const pool = [...candidates]
     .sort((a, b) => b.total - a.total)
     .slice(0, targetSize);
 
-  const expertRankings = buildExpertRankings(pool);
+  if (pool.length <= 1) return { result: pool, log: [] };
+
   const n = pool.length;
+  const expertPerms = generateRandomPerms(n, 20, 42);
   const { popSize, generations, mutationRate, eliteCount } = opts;
 
-  let pop: Permutation[] = Array.from({ length: popSize }, () => randomPerm(n));
+  let pop: number[][] = Array.from({ length: popSize }, () => randomPerm(n));
   const log: GenerationLog[] = [];
 
   const logSet = new Set<number>([
@@ -199,13 +343,13 @@ export function runGeneticAlgorithm(
   ]);
 
   for (let g = 0; g < generations; g++) {
-    pop.sort((a, b) => gaFitness(a, expertRankings) - gaFitness(b, expertRankings));
+    pop.sort((a, b) => fitnessSum(a, expertPerms) - fitnessSum(b, expertPerms));
 
     if (logSet.has(g)) {
-      const fitnesses = pop.map(p => gaFitness(p, expertRankings));
-      const best = fitnesses[0];
-      const worst = fitnesses[fitnesses.length - 1];
-      const avg = fitnesses.reduce((s, f) => s + f, 0) / fitnesses.length;
+      const fits = pop.map(p => fitnessSum(p, expertPerms));
+      const best = fits[0];
+      const worst = fits[fits.length - 1];
+      const avg = fits.reduce((s, f) => s + f, 0) / fits.length;
       log.push({
         generation: g + 1,
         bestFitness: Math.round(best * 10) / 10,
@@ -216,21 +360,16 @@ export function runGeneticAlgorithm(
     }
 
     const elite = pop.slice(0, eliteCount);
-    const children: Permutation[] = [];
+    const children: number[][] = [];
     while (children.length < popSize - eliteCount) {
-      const parentA = elite[Math.floor(Math.random() * elite.length)];
-      const parentB = elite[Math.floor(Math.random() * elite.length)];
-      children.push(mutateSwap(crossoverOX(parentA, parentB), mutationRate));
+      const pa = elite[Math.floor(Math.random() * elite.length)];
+      const pb = elite[Math.floor(Math.random() * elite.length)];
+      children.push(mutateSwap(crossoverOX(pa, pb), mutationRate));
     }
     pop = [...elite, ...children];
   }
 
-  pop.sort((a, b) => gaFitness(a, expertRankings) - gaFitness(b, expertRankings));
-
-  return {
-    result: pop[0].map(i => pool[i]),
-    log,
-  };
+  return { result: pop[0].map(i => pool[i]), log };
 }
 
 export function capToMaxSize(scores: FlowerScore[], maxSize = 10): FlowerScore[] {
