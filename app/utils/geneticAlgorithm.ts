@@ -193,7 +193,7 @@ function mutateSwap(perm: number[], rate: number): number[] {
 
 // ----------------------------------------------------------------
 // Single independent GA run
-// Records every generation where a new best was found
+// Records every generation where a NEW BEST was found (strictly better)
 // ----------------------------------------------------------------
 interface SingleGAResult {
   bestPerm: number[];
@@ -218,10 +218,12 @@ function runSingleGA(
   const improvements: Array<{ gen: number; perm: number[]; val: number }> = [];
 
   for (let g = 0; g < generations; g++) {
-    // Sort by fitness
-    pop.sort((a, b) => fitFn(a, expertPerms) - fitFn(b, expertPerms));
+    // Evaluate and sort by fitness
+    const evaluated = pop.map(p => ({ perm: p, fit: fitFn(p, expertPerms) }));
+    evaluated.sort((a, b) => a.fit - b.fit);
+    pop = evaluated.map(e => e.perm);
 
-    const curBest = fitFn(pop[0], expertPerms);
+    const curBest = evaluated[0].fit;
     if (curBest < bestVal) {
       bestVal = curBest;
       bestPerm = [...pop[0]];
@@ -247,6 +249,8 @@ function runSingleGA(
 
 // ----------------------------------------------------------------
 // Main export: dual-criteria GA
+// Runs two INDEPENDENT evolutions: K1 (min sum) and K2 (min max)
+// Table rows = improvement events, aligned by row index
 // ----------------------------------------------------------------
 export function runDualCriteriaGA(
   candidates: FlowerScore[],
@@ -264,13 +268,15 @@ export function runDualCriteriaGA(
   // 20 random permutations — same seed every run for reproducibility
   const expertPerms = generateRandomPerms(n, nExperts, seed);
 
-  // K1: minimise sum of Hamming distances
+  // K1: minimise sum of Hamming distances (незалежна еволюція)
   const r1 = runSingleGA(n, expertPerms, fitnessSum);
 
-  // K2: minimise max Hamming distance
+  // K2: minimise max Hamming distance (незалежна еволюція)
   const r2 = runSingleGA(n, expertPerms, fitnessMax);
 
-  // Build table — one row per improvement (aligned by index)
+  // Build improvement-history table:
+  // Each row i contains the i-th improvement found in K1 run AND K2 run (independently).
+  // If one side has fewer improvements, that side shows "—" for remaining rows.
   const maxRows = Math.max(r1.improvements.length, r2.improvements.length);
   const solutions: DualSolution[] = [];
 
@@ -280,10 +286,12 @@ export function runDualCriteriaGA(
 
     solutions.push({
       rowIndex: i + 1,
+      // K1 column
       k1Ranking: imp1 ? imp1.perm.map(idx => pool[idx].name) : null,
       k1SumValue: imp1 ? imp1.val : null,
       k1MaxAtK1: imp1 ? fitnessMax(imp1.perm, expertPerms) : null,
       k1FoundGen: imp1 ? imp1.gen : null,
+      // K2 column
       k2Ranking: imp2 ? imp2.perm.map(idx => pool[idx].name) : null,
       k2MaxValue: imp2 ? imp2.val : null,
       k2SumAtK2: imp2 ? fitnessSum(imp2.perm, expertPerms) : null,
@@ -293,11 +301,13 @@ export function runDualCriteriaGA(
 
   return {
     solutions,
+    // K1 summary
     k1BestSum: r1.bestVal,
     k1BestMax: fitnessMax(r1.bestPerm, expertPerms),
     k1Ranking: r1.bestPerm.map(idx => pool[idx].name),
     k1FoundCount: r1.improvements.length,
     k1SolCount: r1.solCount,
+    // K2 summary
     k2BestMax: r2.bestVal,
     k2BestSum: fitnessSum(r2.bestPerm, expertPerms),
     k2Ranking: r2.bestPerm.map(idx => pool[idx].name),
