@@ -240,6 +240,8 @@ function runSingleGA(
   let bestVal = Infinity;
   let bestPerm: number[] = [];
   const improvements: Array<{ gen: number; perm: number[]; val: number }> = [];
+  // Серіалізовані перестановки що вже записані — щоб не дублювати однакові
+  const seenPerms = new Set<string>();
 
   for (let g = 0; g < generations; g++) {
     // Оцінюємо fitness рівно один раз на покоління
@@ -252,11 +254,22 @@ function runSingleGA(
       if (fits[i] < minFit) { minFit = fits[i]; minIdx = i; }
     }
 
-    // Записуємо тільки СТРОГО нові покращення
     if (minFit < bestVal) {
+      // Строго краще — скидаємо множину, починаємо новий рівень
       bestVal = minFit;
       bestPerm = [...pop[minIdx]];
+      seenPerms.clear();
+      const key = pop[minIdx].join(',');
+      seenPerms.add(key);
       improvements.push({ gen: g + 1, perm: [...pop[minIdx]], val: minFit });
+    } else if (minFit === bestVal) {
+      // Те саме значення — записуємо лише якщо нова унікальна перестановка
+      const key = pop[minIdx].join(',');
+      if (!seenPerms.has(key)) {
+        seenPerms.add(key);
+        bestPerm = [...pop[minIdx]];
+        improvements.push({ gen: g + 1, perm: [...pop[minIdx]], val: minFit });
+      }
     }
 
     // Сортуємо для вибору еліти
