@@ -29,16 +29,16 @@ export interface DualSolution {
 
 export interface DualGAResult {
   solutions: DualSolution[];
+  // K1 final best
   k1BestSum: number;
   k1BestMax: number;
   k1Ranking: string[];
-  k1FoundCount: number;
-  k1SolCount: number;
+  k1SolCount: number;   // кількість знайдених унікальних розв'язків К1
+  // K2 final best
   k2BestMax: number;
   k2BestSum: number;
   k2Ranking: string[];
-  k2FoundCount: number;
-  k2SolCount: number;
+  k2SolCount: number;   // кількість знайдених унікальних розв'язків К2
 }
 
 // ----------------------------------------------------------------
@@ -87,7 +87,7 @@ export function applyHeuristicsSequentially(
 }
 
 // ----------------------------------------------------------------
-// Seeded LCG — відтворюваність результатів
+// Seeded LCG
 // ----------------------------------------------------------------
 function makeLCG(seed: number) {
   let s = seed >>> 0;
@@ -107,7 +107,7 @@ function hammingDistance(a: number[], b: number[]): number {
 }
 
 // ----------------------------------------------------------------
-// Генерація nExperts=10 випадкових перестановок (фіксований seed)
+// Генерація nExperts випадкових перестановок
 // ----------------------------------------------------------------
 export function generateRandomPerms(n: number, count: number, seed = 42): number[][] {
   const rand = makeLCG(seed);
@@ -142,9 +142,8 @@ function fitnessMax(perm: number[], expertPerms: number[][]): number {
 }
 
 // ----------------------------------------------------------------
-// GA operators — всі через seeded rand для відтворюваності
+// GA operators
 // ----------------------------------------------------------------
-
 function seededRandomPerm(n: number, rand: () => number): number[] {
   const arr = Array.from({ length: n }, (_, i) => i);
   for (let i = arr.length - 1; i > 0; i--) {
@@ -154,7 +153,7 @@ function seededRandomPerm(n: number, rand: () => number): number[] {
   return arr;
 }
 
-// OX crossover (Order Crossover 1)
+// OX crossover
 function crossoverOX(a: number[], b: number[], rand: () => number): number[] {
   const n = a.length;
   let p1 = Math.floor(rand() * n);
@@ -174,8 +173,7 @@ function crossoverOX(a: number[], b: number[], rand: () => number): number[] {
   return child;
 }
 
-// Insert mutation: виймає елемент з позиції i, вставляє на позицію j
-// Краща за swap для задач ранжування (менше руйнує структуру)
+// Insert mutation
 function mutateInsert(perm: number[], rate: number, rand: () => number): number[] {
   if (rand() > rate) return perm;
   const copy = [...perm];
@@ -188,8 +186,7 @@ function mutateInsert(perm: number[], rate: number, rand: () => number): number[
   return copy;
 }
 
-// Турнірна селекція (tournament size k=3) — класика ГА
-// Краща за "брати тільки топ-N еліти", бо зберігає різноманітність
+// Турнірна селекція
 function tournamentSelect(
   pop: number[][],
   fits: number[],
@@ -205,19 +202,14 @@ function tournamentSelect(
 }
 
 // ----------------------------------------------------------------
-// Single independent GA run
-//
-// Параметри (класичний ГА для задач ранжування):
-//   popSize   = 50    (не 80 — менша популяція, більше поколінь)
-//   generations = 200
-//   mutRate   = 0.20  (20% — вища мутація для різноманітності)
-//   eliteCount = 2    (лише 2 найкращих — не 10!)
-//   tournamentK = 3   (турнірна селекція замість "тільки еліта")
+// Single GA run
+// solutions = всі унікальні перестановки що досягли поточного оптимуму
+// (нова перестановка з тим самим значенням теж записується як окремий рядок)
 // ----------------------------------------------------------------
 interface SingleGAResult {
   bestPerm: number[];
   bestVal: number;
-  improvements: Array<{ gen: number; perm: number[]; val: number }>;
+  solutions: Array<{ gen: number; perm: number[]; val: number }>;
   solCount: number;
 }
 
@@ -234,20 +226,16 @@ function runSingleGA(
 ): SingleGAResult {
   const rand = makeLCG(seed);
 
-  // Початкова популяція — seeded для відтворюваності
   let pop: number[][] = Array.from({ length: popSize }, () => seededRandomPerm(n, rand));
 
   let bestVal = Infinity;
   let bestPerm: number[] = [];
-  const improvements: Array<{ gen: number; perm: number[]; val: number }> = [];
-  // Серіалізовані перестановки що вже записані — щоб не дублювати однакові
+  const solutions: Array<{ gen: number; perm: number[]; val: number }> = [];
   const seenPerms = new Set<string>();
 
   for (let g = 0; g < generations; g++) {
-    // Оцінюємо fitness рівно один раз на покоління
     const fits = pop.map(p => fitFn(p, expertPerms));
 
-    // Знаходимо найкращу особину
     let minFit = Infinity;
     let minIdx = 0;
     for (let i = 0; i < fits.length; i++) {
@@ -255,33 +243,30 @@ function runSingleGA(
     }
 
     if (minFit < bestVal) {
-      // Строго краще — скидаємо множину, починаємо новий рівень
+      // Строго краще — новий рівень, скидаємо seen
       bestVal = minFit;
       bestPerm = [...pop[minIdx]];
       seenPerms.clear();
       const key = pop[minIdx].join(',');
       seenPerms.add(key);
-      improvements.push({ gen: g + 1, perm: [...pop[minIdx]], val: minFit });
+      solutions.push({ gen: g + 1, perm: [...pop[minIdx]], val: minFit });
     } else if (minFit === bestVal) {
-      // Те саме значення — записуємо лише якщо нова унікальна перестановка
+      // Та сама якість — записуємо якщо перестановка нова
       const key = pop[minIdx].join(',');
       if (!seenPerms.has(key)) {
         seenPerms.add(key);
         bestPerm = [...pop[minIdx]];
-        improvements.push({ gen: g + 1, perm: [...pop[minIdx]], val: minFit });
+        solutions.push({ gen: g + 1, perm: [...pop[minIdx]], val: minFit });
       }
     }
 
-    // Сортуємо для вибору еліти
     const sortedIdx = fits
       .map((f, i) => ({ f, i }))
       .sort((a, b) => a.f - b.f)
       .map(e => e.i);
 
-    // Елітизм: 2 найкращих переходять без змін
     const elite = sortedIdx.slice(0, eliteCount).map(i => [...pop[i]]);
 
-    // Решта — турнірна селекція + OX crossover + insert mutation
     const children: number[][] = [];
     while (children.length < popSize - eliteCount) {
       const pa = tournamentSelect(pop, fits, tournamentK, rand);
@@ -293,25 +278,27 @@ function runSingleGA(
     pop = [...elite, ...children];
   }
 
-  // Рахуємо УНІКАЛЬНІ перестановки з оптимальним значенням
-  // (не просто "кількість особин з цим fitness", а різних рядків)
+  // Унікальні оптимальні у фінальній популяції
   const finalFits = pop.map(p => fitFn(p, expertPerms));
-  const optimalPerms = pop.filter((_, i) => finalFits[i] === bestVal);
-  const uniqueOptimal = new Set(optimalPerms.map(p => p.join(','))).size;
+  const uniqueOptimal = new Set(
+    pop.filter((_, i) => finalFits[i] === bestVal).map(p => p.join(','))
+  ).size;
 
-  return { bestPerm, bestVal, improvements, solCount: uniqueOptimal };
+  return { bestPerm, bestVal, solutions, solCount: uniqueOptimal };
 }
 
 // ----------------------------------------------------------------
 // Main export: dual-criteria GA
-// nExperts=10 — 10 перестановок (голосів) для агрегації
-// K1 і K2 — РІЗНІ seed щоб еволюції були незалежними
+// 20 експертів генерують перестановки по 10 об'єктів.
+// Seed для популяції — випадковий (Date.now) при кожному запуску,
+// seed для експертних перестановок — фіксований (42) щоб вхідні
+// дані були стабільними між запусками.
 // ----------------------------------------------------------------
 export function runDualCriteriaGA(
   candidates: FlowerScore[],
   targetSize = 10,
   nExperts = 20,
-  seed = 42
+  expertSeed = 42
 ): DualGAResult {
   const pool = [...candidates]
     .sort((a, b) => b.total - a.total)
@@ -319,29 +306,30 @@ export function runDualCriteriaGA(
 
   const n = pool.length;
 
-  // 20 експертних перестановок (20 експертів, кожен задав своє ранжування)
-  const expertPerms = generateRandomPerms(n, nExperts, seed);
+  // 20 експертних перестановок — фіксований seed, щоб вхідні дані не змінювались
+  const expertPerms = generateRandomPerms(n, nExperts, expertSeed);
 
-  // Дві незалежні еволюції з різними seed
-  const r1 = runSingleGA(n, expertPerms, fitnessSum, 50, 200, 0.20, 2, 3, 11111);
-  const r2 = runSingleGA(n, expertPerms, fitnessMax, 50, 200, 0.20, 2, 3, 22222);
+  // Випадкові seed для популяцій — різний результат при кожному запуску
+  const now = Date.now();
+  const r1 = runSingleGA(n, expertPerms, fitnessSum, 50, 200, 0.20, 2, 3, now ^ 0xABCD);
+  const r2 = runSingleGA(n, expertPerms, fitnessMax, 50, 200, 0.20, 2, 3, now ^ 0x1234);
 
-  const maxRows = Math.max(r1.improvements.length, r2.improvements.length);
+  const maxRows = Math.max(r1.solutions.length, r2.solutions.length);
   const solutions: DualSolution[] = [];
 
   for (let i = 0; i < maxRows; i++) {
-    const imp1 = r1.improvements[i] ?? null;
-    const imp2 = r2.improvements[i] ?? null;
+    const s1 = r1.solutions[i] ?? null;
+    const s2 = r2.solutions[i] ?? null;
     solutions.push({
       rowIndex: i + 1,
-      k1Ranking: imp1 ? imp1.perm.map(idx => pool[idx].name) : null,
-      k1SumValue: imp1 ? imp1.val : null,
-      k1MaxAtK1: imp1 ? fitnessMax(imp1.perm, expertPerms) : null,
-      k1FoundGen: imp1 ? imp1.gen : null,
-      k2Ranking: imp2 ? imp2.perm.map(idx => pool[idx].name) : null,
-      k2MaxValue: imp2 ? imp2.val : null,
-      k2SumAtK2: imp2 ? fitnessSum(imp2.perm, expertPerms) : null,
-      k2FoundGen: imp2 ? imp2.gen : null,
+      k1Ranking: s1 ? s1.perm.map(idx => pool[idx].name) : null,
+      k1SumValue: s1 ? s1.val : null,
+      k1MaxAtK1: s1 ? fitnessMax(s1.perm, expertPerms) : null,
+      k1FoundGen: s1 ? s1.gen : null,
+      k2Ranking: s2 ? s2.perm.map(idx => pool[idx].name) : null,
+      k2MaxValue: s2 ? s2.val : null,
+      k2SumAtK2: s2 ? fitnessSum(s2.perm, expertPerms) : null,
+      k2FoundGen: s2 ? s2.gen : null,
     });
   }
 
@@ -350,12 +338,10 @@ export function runDualCriteriaGA(
     k1BestSum: r1.bestVal,
     k1BestMax: fitnessMax(r1.bestPerm, expertPerms),
     k1Ranking: r1.bestPerm.map(idx => pool[idx].name),
-    k1FoundCount: r1.improvements.length,
     k1SolCount: r1.solCount,
     k2BestMax: r2.bestVal,
     k2BestSum: fitnessSum(r2.bestPerm, expertPerms),
     k2Ranking: r2.bestPerm.map(idx => pool[idx].name),
-    k2FoundCount: r2.improvements.length,
     k2SolCount: r2.solCount,
   };
 }
@@ -378,7 +364,7 @@ export function runGeneticAlgorithm(
   const expertPerms = generateRandomPerms(n, 20, 42);
   const { popSize, generations, mutationRate, eliteCount } = opts;
 
-  const rand = makeLCG(99999);
+  const rand = makeLCG(Date.now() ^ 0x9999);
   let pop: number[][] = Array.from({ length: popSize }, () => seededRandomPerm(n, rand));
   const log: GenerationLog[] = [];
 
