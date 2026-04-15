@@ -43,10 +43,8 @@ export default function Lab2Page() {
   const [narrowStep, setNarrowStep] = useState(0);
   const [openStep, setOpenStep] = useState<number | null>(null);
 
-  // ── GA state ──────────────────────────────────────────────────
   const [gaResult, setGaResult] = useState<DualGAResult | null>(null);
   const [gaRunning, setGaRunning] = useState(false);
-  // ─────────────────────────────────────────────────────────────
 
   useEffect(() => {
     onValue(ref(db, 'heuristicVotes'), (snap) => {
@@ -134,9 +132,6 @@ export default function Lab2Page() {
     }
   };
 
-  // ── GA launch ─────────────────────────────────────────────────
-  // Runs two INDEPENDENT evolutions: K1 (min sum Hamming) and K2 (min max Hamming)
-  // Each evolution records every generation where a strictly better solution was found
   const runGA = () => {
     if (subset.length === 0) return alert('Немає даних з ЛР1!');
     setGaRunning(true);
@@ -148,7 +143,6 @@ export default function Lab2Page() {
       setView('algo');
     }, 50);
   };
-  // ─────────────────────────────────────────────────────────────
 
   return (
     <div style={labStyles.mainContainer}>
@@ -575,18 +569,18 @@ export default function Lab2Page() {
           <>
             <h1 style={labStyles.voteTitle}>🧬 Генетичний алгоритм (Двокритеріальний пошук)</h1>
 
-            {/* Description + launch */}
             <div style={labStyles.card}>
               <p style={{ color: '#374151', lineHeight: '1.8', fontSize: '0.95rem', marginBottom: '20px' }}>
-                Виконуємо дві незалежні еволюції: для мінімізації суми відстаней (К1) та для мінімізації максимуму (К2).
+                Виконуємо два запуски генетичного алгоритму: для мінімізації суми відстаней (К1) та для мінімізації максимуму відстані (К2).
               </p>
-              <p style={{ color: '#6b7280', fontSize: '0.85rem', marginBottom: '24px', lineHeight: '1.6' }}>
-                <b>Вхід:</b> 20 випадково згенерованих повних перестановок об&apos;єктів (seed=42).<br />
-                <b>Відстань:</b> Хемінг — кількість позицій, де перестановки різняться.<br />
-                <b>К1</b> — мінімізувати суму відстаней Хемінга від 20 перестановок до знайденого ранжування.<br />
-                <b>К2</b> — мінімізувати максимум відстані (найгірший з 20 варіантів).<br />
-                <b>Популяція:</b> 80 · <b>Поколінь:</b> 200 · <b>Мутація:</b> 10% · <b>Еліта:</b> 10<br />
-                <b>Кросинговер OX:</b> відрізок від першого батька, решта — з другого в порядку. <b>Swap-мутація:</b> два випадкових елементи міняються місцями.
+              <p style={{ color: '#6b7280', fontSize: '0.85rem', marginBottom: '24px', lineHeight: '1.8' }}>
+                <b>Вхідні дані:</b> 20 випадково згенерованих перестановок 10 об&apos;єктів (імітація голосів експертів).<br />
+                <b>Відстань Хемінга</b> між двома перестановками — кількість позицій, де вони різняться.<br />
+                <b>К1 (мін. сума):</b> знайти ранжування, для якого сума відстаней Хемінга до всіх 20 перестановок є мінімальною.<br />
+                <b>К2 (мін. максимум):</b> знайти ранжування, для якого максимальна відстань до будь-якої з 20 перестановок є мінімальною.<br />
+                <b>Параметри ГА:</b> популяція 50 · 200 поколінь · мутація 20% · еліта 2 особини · турнір k=3.<br />
+                <b>Кросинговер OX1:</b> зберігає відрізок від першого батька, решта позиції заповнюються з другого батька в порядку їх появи.<br />
+                <b>Insert-мутація:</b> елемент з випадкової позиції вилучається і вставляється на іншу — зберігає відносний порядок.
               </p>
               <div style={{ textAlign: 'center' as const }}>
                 <button
@@ -602,24 +596,21 @@ export default function Lab2Page() {
                   onClick={runGA}
                   disabled={gaRunning}
                 >
-                  🚀 {gaRunning ? 'Виконується...' : 'ЗАПУСТИТИ НЕЗАЛЕЖНІ ЕВОЛЮЦІЇ'}
+                  🚀 {gaRunning ? 'Виконується...' : 'ЗАПУСТИТИ АЛГОРИТМ'}
                 </button>
               </div>
             </div>
 
-            {/* Results */}
             {gaResult && (
               <>
-                {/* 8 summary metrics */}
+                {/* Summary — 6 карток без "Покращень" */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px', marginBottom: '24px' }}>
                   {[
                     { label: 'Мінімум суми (К1)', value: gaResult.k1BestSum, color: '#7c3aed', bg: '#fdf4ff', border: '#d8b4fe' },
                     { label: 'Макс. при К1', value: gaResult.k1BestMax, color: '#9333ea', bg: '#faf5ff', border: '#e9d5ff' },
-                    { label: 'Покращень К1', value: gaResult.k1FoundCount, color: '#6d28d9', bg: '#f5f3ff', border: '#ddd6fe' },
                     { label: 'Розв\'язків К1', value: gaResult.k1SolCount, color: '#7c3aed', bg: '#fdf4ff', border: '#d8b4fe' },
                     { label: 'Мінімум макс. (К2)', value: gaResult.k2BestMax, color: '#15803d', bg: '#f0fdf4', border: '#86efac' },
                     { label: 'Сума при К2', value: gaResult.k2BestSum, color: '#16a34a', bg: '#f0fdf4', border: '#86efac' },
-                    { label: 'Покращень К2', value: gaResult.k2FoundCount, color: '#15803d', bg: '#f0fdf4', border: '#86efac' },
                     { label: 'Розв\'язків К2', value: gaResult.k2SolCount, color: '#15803d', bg: '#f0fdf4', border: '#86efac' },
                   ].map(m => (
                     <div key={m.label} style={{ background: m.bg, border: `1px solid ${m.border}`, borderRadius: '12px', padding: '14px 10px', textAlign: 'center' as const }}>
@@ -629,7 +620,7 @@ export default function Lab2Page() {
                   ))}
                 </div>
 
-                {/* Best rankings side by side */}
+                {/* Best rankings */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
                   {[
                     { title: 'Ранжування К1 (мін. сума)', ranking: gaResult.k1Ranking, color: '#7c3aed', bg: '#fdf4ff', border: '#d8b4fe' },
@@ -656,9 +647,9 @@ export default function Lab2Page() {
                   ))}
                 </div>
 
-                {/* Improvement history table — matches screenshot layout */}
+                {/* Solutions table */}
                 <div style={labStyles.card}>
-                  <div style={labStyles.sectionTitle}>Знайдені незалежні розв&apos;язки:</div>
+                  <div style={labStyles.sectionTitle}>Знайдені розв&apos;язки:</div>
                   <div style={{ overflowX: 'auto' as const }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontSize: '0.84rem' }}>
                       <thead>
@@ -679,11 +670,9 @@ export default function Lab2Page() {
                       <tbody>
                         {gaResult.solutions.map((row, i) => (
                           <tr key={i} style={{ background: i % 2 === 0 ? '#fdfaf7' : '#ffffff', borderBottom: '1px solid #ffe4e1' }}>
-                            {/* # */}
                             <td style={{ padding: '14px 10px', textAlign: 'center' as const, fontWeight: 700, color: '#374151', borderRight: '1px solid #e5e7eb', verticalAlign: 'top' as const }}>
                               {row.rowIndex}
                             </td>
-                            {/* K1 column */}
                             <td style={{ padding: '14px 16px', borderRight: '1px solid #e5e7eb', verticalAlign: 'top' as const }}>
                               {row.k1Ranking ? (
                                 <>
@@ -704,7 +693,6 @@ export default function Lab2Page() {
                                 <span style={{ color: '#d1d5db', fontSize: '1.4rem' }}>—</span>
                               )}
                             </td>
-                            {/* K2 column */}
                             <td style={{ padding: '14px 16px', verticalAlign: 'top' as const }}>
                               {row.k2Ranking ? (
                                 <>
@@ -750,7 +738,6 @@ export default function Lab2Page() {
                         {[
                           { label: 'Сума відстаней (К1)', v1: gaResult.k1BestSum, v2: gaResult.k2BestSum },
                           { label: 'Максимум відстані (К2)', v1: gaResult.k1BestMax, v2: gaResult.k2BestMax },
-                          { label: 'Знайдено покращень', v1: gaResult.k1FoundCount, v2: gaResult.k2FoundCount },
                           { label: 'Кількість розв\'язків', v1: gaResult.k1SolCount, v2: gaResult.k2SolCount },
                         ].map((row, i) => (
                           <tr key={row.label} style={{ background: i % 2 === 0 ? '#fff' : '#fdfaf7' }}>
