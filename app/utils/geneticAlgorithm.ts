@@ -310,7 +310,7 @@ function runSingleGA(
 export function runDualCriteriaGA(
   candidates: FlowerScore[],
   targetSize = 10,
-  nExperts = 10,
+  nExperts = 20,
   seed = 42
 ): DualGAResult {
   const pool = [...candidates]
@@ -319,7 +319,7 @@ export function runDualCriteriaGA(
 
   const n = pool.length;
 
-  // 10 експертних перестановок
+  // 20 експертних перестановок (20 експертів, кожен задав своє ранжування)
   const expertPerms = generateRandomPerms(n, nExperts, seed);
 
   // Дві незалежні еволюції з різними seed
